@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import AdvancedAnalytics from '../components/AdvancedAnalytics';
 import VisualizationTabs from '../components/VisualizationTabs';
 
 const Results = () => {
@@ -292,6 +293,9 @@ const Results = () => {
             </div>
           </div>
         </div>
+
+        {/* Advanced Analytics */}
+        <AdvancedAnalytics results={results} />
 
         {/* Action buttons */}
         <div className="flex justify-center space-x-4 mt-8">

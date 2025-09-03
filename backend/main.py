@@ -392,6 +392,49 @@ class QuantumClassicalMLSimulator:
             'predictions': y_pred.tolist()
         }
     
+    def calculate_feature_importance(self, model, X_test, y_test, model_type='classical'):
+        """Calculate feature importance using permutation importance"""
+        from sklearn.inspection import permutation_importance
+        
+        baseline_accuracy = accuracy_score(y_test, model.predict(X_test))
+        feature_importance = []
+        
+        for i in range(X_test.shape[1]):
+            X_permuted = X_test.copy()
+            # Permute the i-th feature
+            np.random.shuffle(X_permuted[:, i])
+            # Calculate accuracy with permuted feature
+            permuted_accuracy = accuracy_score(y_test, model.predict(X_permuted))
+            # Feature importance is the decrease in accuracy
+            importance = baseline_accuracy - permuted_accuracy
+            feature_importance.append(max(0, importance))  # Ensure non-negative
+        
+        return feature_importance
+    
+    def calculate_quantum_advantage_score(self, classical_acc, quantum_acc, hybrid_acc, 
+                                        classical_time, quantum_time, hybrid_time):
+        """Calculate quantum advantage metrics"""
+        # Accuracy advantage
+        quantum_acc_advantage = (quantum_acc - classical_acc) / max(classical_acc, 0.01)
+        hybrid_acc_advantage = (hybrid_acc - max(classical_acc, quantum_acc)) / max(max(classical_acc, quantum_acc), 0.01)
+        
+        # Time efficiency (lower is better, so we invert the ratio)
+        quantum_time_efficiency = classical_time / max(quantum_time, 0.01)
+        hybrid_time_efficiency = classical_time / max(hybrid_time, 0.01)
+        
+        # Overall advantage score (combines accuracy and efficiency)
+        quantum_advantage = quantum_acc_advantage * 0.7 + (quantum_time_efficiency - 1) * 0.3
+        hybrid_advantage = hybrid_acc_advantage * 0.7 + (hybrid_time_efficiency - 1) * 0.3
+        
+        return {
+            'quantum_accuracy_advantage': quantum_acc_advantage,
+            'hybrid_accuracy_advantage': hybrid_acc_advantage,
+            'quantum_time_efficiency': quantum_time_efficiency,
+            'hybrid_time_efficiency': hybrid_time_efficiency,
+            'quantum_overall_advantage': quantum_advantage,
+            'hybrid_overall_advantage': hybrid_advantage
+        }
+    
     def create_decision_boundary_plot(self, model, X, y, title: str) -> str:
         """Create decision boundary plot"""
         plt.figure(figsize=(8, 6))
@@ -800,6 +843,37 @@ async def run_simulation(request: SimulationRequest):
         hybrid_results = simulator.evaluate_model(hybrid_model, X_test_hybrid, y_test)
         hybrid_results['training_time'] = hybrid_time
         results['hybrid'] = hybrid_results
+        
+        # Calculate feature importance for all models
+        logger.info("Calculating feature importance...")
+        try:
+            classical_importance = simulator.calculate_feature_importance(
+                classical_model, X_test_scaled, y_test, 'classical'
+            )
+            quantum_importance = simulator.calculate_feature_importance(
+                quantum_model, X_test_scaled, y_test, 'quantum'
+            )
+            
+            results['feature_importance'] = {
+                'classical': classical_importance,
+                'quantum': quantum_importance,
+                'feature_names': ['Feature 1', 'Feature 2']
+            }
+        except Exception as e:
+            logger.warning(f"Feature importance calculation failed: {e}")
+            results['feature_importance'] = None
+        
+        # Calculate quantum advantage metrics
+        logger.info("Calculating quantum advantage metrics...")
+        advantage_metrics = simulator.calculate_quantum_advantage_score(
+            classical_results['accuracy'],
+            quantum_results['accuracy'], 
+            hybrid_results['accuracy'],
+            classical_results['training_time'],
+            quantum_results['training_time'],
+            hybrid_results['training_time']
+        )
+        results['quantum_advantage'] = advantage_metrics
         
         # Generate comprehensive visualizations
         logger.info("Generating comprehensive visualizations...")

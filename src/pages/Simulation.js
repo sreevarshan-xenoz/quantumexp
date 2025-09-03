@@ -5,6 +5,7 @@ import QuantumCircuitVisualizer from '../components/QuantumCircuitVisualizer';
 import ModelSelector from '../components/ModelSelector';
 import ParameterSlider from '../components/ParameterSlider';
 import ProgressIndicator from '../components/ProgressIndicator';
+import SimulationVisualizationTabs from '../components/SimulationVisualizationTabs';
 import { runSimulation, generateDatasetPreview } from '../api/simulation';
 
 const Simulation = () => {
@@ -272,25 +273,12 @@ const Simulation = () => {
 
           {/* Right Panel - Visualizations */}
           <div className="lg:col-span-2 space-y-8">
-            <div className="card animate-slide-up">
-              <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <div className="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
-                Dataset Preview
-              </h2>
-              <DatasetVisualizer 
-                data={datasetPreview}
+            <div className="animate-slide-up">
+              <SimulationVisualizationTabs 
+                datasetPreview={datasetPreview}
                 datasetType={datasetType}
-                isLoading={isLoadingPreview}
-              />
-            </div>
-
-            <div className="card animate-slide-up">
-              <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                Quantum Circuit
-              </h2>
-              <QuantumCircuitVisualizer 
-                model={quantumModel} 
+                isLoadingPreview={isLoadingPreview}
+                quantumModel={quantumModel}
                 featureMap={featureMap}
               />
             </div>
