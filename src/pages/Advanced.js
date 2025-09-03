@@ -4,6 +4,9 @@ import OptimizationResults from '../components/OptimizationResults';
 import QuantumHardwareManager from '../components/QuantumHardwareManager';
 import AdvancedQuantumAlgorithms from '../components/AdvancedQuantumAlgorithms';
 import HybridOptimization from '../components/HybridOptimization';
+import AdvancedGraphAnalytics from '../components/AdvancedGraphAnalytics';
+import QuantumAnalyticsDashboard from '../components/QuantumAnalyticsDashboard';
+import PerformanceComparisonGraphs from '../components/PerformanceComparisonGraphs';
 import { optimizeHyperparameters } from '../api/simulation';
 
 const Advanced = () => {
@@ -58,8 +61,20 @@ const Advanced = () => {
     },
     {
       icon: '📊',
-      title: 'Multi-Objective Optimization',
-      description: 'Pareto-optimal solutions for multiple objectives simultaneously',
+      title: 'Advanced Graph Analytics',
+      description: 'Interactive D3.js visualizations with 8+ graph types for deep analysis',
+      status: 'Available'
+    },
+    {
+      icon: '📈',
+      title: 'Real-time Quantum Dashboard',
+      description: 'Live quantum metrics monitoring with fidelity, entanglement, and coherence tracking',
+      status: 'Available'
+    },
+    {
+      icon: '⚖️',
+      title: 'Performance Comparison Suite',
+      description: 'Multi-dimensional algorithm comparison with scalability and efficiency analysis',
       status: 'Available'
     }
   ];
@@ -127,6 +142,21 @@ const Advanced = () => {
         {/* Hybrid Optimization Section */}
         <div className="mb-12">
           <HybridOptimization />
+        </div>
+
+        {/* Advanced Graph Analytics Section */}
+        <div className="mb-12">
+          <AdvancedGraphAnalytics />
+        </div>
+
+        {/* Quantum Analytics Dashboard Section */}
+        <div className="mb-12">
+          <QuantumAnalyticsDashboard />
+        </div>
+
+        {/* Performance Comparison Graphs Section */}
+        <div className="mb-12">
+          <PerformanceComparisonGraphs />
         </div>
 
         {/* Advanced Analytics Preview */}
