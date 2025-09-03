@@ -7,8 +7,7 @@ import HybridOptimization from '../components/HybridOptimization';
 import AdvancedGraphAnalytics from '../components/AdvancedGraphAnalytics';
 import QuantumAnalyticsDashboard from '../components/QuantumAnalyticsDashboard';
 import PerformanceComparisonGraphs from '../components/PerformanceComparisonGraphs';
-import QuantumFederatedLearning from '../components/QuantumFederatedLearning';
-import QuantumTransferLearning from '../components/QuantumTransferLearning';
+
 import { optimizeHyperparameters } from '../api/simulation';
 
 const Advanced = () => {
@@ -67,18 +66,7 @@ const Advanced = () => {
       description: 'Interactive D3.js visualizations with 8+ graph types for deep analysis',
       status: 'Available'
     },
-    {
-      icon: '🌐',
-      title: 'Quantum Federated Learning',
-      description: 'Distributed quantum ML training with privacy-preserving secure aggregation',
-      status: 'Available'
-    },
-    {
-      icon: '🔄',
-      title: 'Quantum Transfer Learning',
-      description: 'Pre-trained quantum models with domain adaptation and few-shot learning',
-      status: 'Available'
-    }
+
   ];
 
   return (
@@ -161,27 +149,7 @@ const Advanced = () => {
           <PerformanceComparisonGraphs />
         </div>
 
-        {/* Phase 4: Quantum ML Ecosystem */}
-        <div className="mb-12">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold gradient-text mb-4">
-              Phase 4: Quantum ML Ecosystem
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-lg max-w-3xl mx-auto">
-              Advanced quantum machine learning applications including federated learning and transfer learning
-            </p>
-          </div>
 
-          {/* Quantum Federated Learning Section */}
-          <div className="mb-12">
-            <QuantumFederatedLearning />
-          </div>
-
-          {/* Quantum Transfer Learning Section */}
-          <div className="mb-12">
-            <QuantumTransferLearning />
-          </div>
-        </div>
 
         {/* Advanced Analytics Preview */}
         <div className="card animate-slide-up">

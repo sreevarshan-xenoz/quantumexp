@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import time
 import io
 import base64
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import logging
 
 from fastapi import FastAPI, HTTPException
@@ -42,18 +42,14 @@ try:
     from quantum_error_mitigation import error_mitigator
     from advanced_quantum_algorithms import algorithm_manager
     from hybrid_optimization import hybrid_optimizer_manager
-    from quantum_federated_learning import federated_manager
-    from quantum_transfer_learning import transfer_manager
     QUANTUM_HARDWARE_AVAILABLE = True
     ADVANCED_ALGORITHMS_AVAILABLE = True
     HYBRID_OPTIMIZATION_AVAILABLE = True
-    PHASE_4_AVAILABLE = True
 except ImportError:
     QUANTUM_HARDWARE_AVAILABLE = False
     ADVANCED_ALGORITHMS_AVAILABLE = False
     HYBRID_OPTIMIZATION_AVAILABLE = False
-    PHASE_4_AVAILABLE = False
-    logging.warning("Phase 4 quantum ML ecosystem modules not available.")
+    logging.warning("Quantum hardware and algorithm modules not available.")
 from sklearn.naive_bayes import GaussianNB
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis, LinearDiscriminantAnalysis
 from sklearn.decomposition import PCA
@@ -2022,167 +2018,7 @@ async def run_multi_objective_optimization(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Multi-objective optimization failed: {str(e)}")
 
-# Phase 4: Quantum ML Ecosystem Endpoints
-class FederatedLearningRequest(BaseModel):
-    experiment_id: str
-    num_clients: int = 3
-    num_qubits: int = 2
-    data_distribution: str = "iid"  # "iid" or "non_iid"
-    num_rounds: int = 10
-    secure: bool = False
 
-class TransferLearningRequest(BaseModel):
-    model_id: str
-    extractor_id: str
-    classifier_type: str = "quantum"  # "quantum" or "classical"
-    num_qubits: int = 2
-    feature_map_type: str = "ZZ"
-
-@app.get("/phase4/status")
-async def get_phase4_status():
-    """Get Phase 4 quantum ML ecosystem status"""
-    if not PHASE_4_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Phase 4 quantum ML ecosystem not available")
-    
-    return {
-        "phase4_available": True,
-        "federated_learning": True,
-        "transfer_learning": True,
-        "quantum_generative_models": False,  # Coming soon
-        "quantum_reinforcement_learning": False,  # Coming soon
-        "quantum_nlp": False  # Coming soon
-    }
-
-# Quantum Federated Learning Endpoints
-@app.post("/federated_learning/create_experiment")
-async def create_federated_experiment(request: FederatedLearningRequest):
-    """Create a new quantum federated learning experiment"""
-    if not PHASE_4_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Phase 4 features not available")
-    
-    try:
-        result = federated_manager.create_federated_experiment(
-            experiment_id=request.experiment_id,
-            num_clients=request.num_clients,
-            num_qubits=request.num_qubits,
-            data_distribution=request.data_distribution
-        )
-        
-        return result
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create federated experiment: {str(e)}")
-
-@app.post("/federated_learning/run_experiment")
-async def run_federated_experiment(request: FederatedLearningRequest):
-    """Run quantum federated learning experiment"""
-    if not PHASE_4_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Phase 4 features not available")
-    
-    try:
-        result = federated_manager.run_experiment(
-            experiment_id=request.experiment_id,
-            num_rounds=request.num_rounds,
-            secure=request.secure
-        )
-        
-        return result
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Federated experiment failed: {str(e)}")
-
-@app.get("/federated_learning/experiment_status/{experiment_id}")
-async def get_federated_experiment_status(experiment_id: str):
-    """Get status of federated learning experiment"""
-    if not PHASE_4_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Phase 4 features not available")
-    
-    try:
-        result = federated_manager.get_experiment_status(experiment_id)
-        return result
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get experiment status: {str(e)}")
-
-# Quantum Transfer Learning Endpoints
-@app.post("/transfer_learning/create_extractor")
-async def create_pretrained_extractor(request: TransferLearningRequest):
-    """Create and pre-train a quantum feature extractor"""
-    if not PHASE_4_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Phase 4 features not available")
-    
-    try:
-        result = transfer_manager.create_pretrained_extractor(
-            extractor_id=request.extractor_id,
-            num_qubits=request.num_qubits,
-            feature_map_type=request.feature_map_type
-        )
-        
-        return result
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create feature extractor: {str(e)}")
-
-@app.post("/transfer_learning/create_model")
-async def create_transfer_model(request: TransferLearningRequest):
-    """Create a quantum transfer learning model"""
-    if not PHASE_4_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Phase 4 features not available")
-    
-    try:
-        result = transfer_manager.create_transfer_model(
-            model_id=request.model_id,
-            extractor_id=request.extractor_id,
-            classifier_type=request.classifier_type
-        )
-        
-        return result
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create transfer model: {str(e)}")
-
-@app.post("/transfer_learning/fine_tune")
-async def fine_tune_transfer_model(
-    model_id: str,
-    dataset_size: int = 100,
-    epochs: int = 10
-):
-    """Fine-tune a quantum transfer learning model"""
-    if not PHASE_4_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Phase 4 features not available")
-    
-    try:
-        # Generate synthetic fine-tuning data
-        X = np.random.randn(dataset_size, 2)
-        y = (X[:, 0] + X[:, 1] > 0).astype(int)
-        
-        result = transfer_manager.fine_tune_model(
-            model_id=model_id,
-            X=X,
-            y=y,
-            epochs=epochs
-        )
-        
-        return result
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fine-tuning failed: {str(e)}")
-
-@app.get("/transfer_learning/models")
-async def list_transfer_models():
-    """List all available transfer learning models and extractors"""
-    if not PHASE_4_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Phase 4 features not available")
-    
-    try:
-        return {
-            "feature_extractors": list(transfer_manager.feature_extractors.keys()),
-            "transfer_models": list(transfer_manager.transfer_models.keys()),
-            "domain_adapters": list(transfer_manager.domain_adapters.keys())
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list models: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

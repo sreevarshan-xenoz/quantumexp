@@ -124,38 +124,82 @@ class EnhancedDatasetManager:
         description = f"Dataset simulating quantum measurements on {n_qubits} qubits with adjustable noise."
         return X, y, feature_names, description
 
-    def _load_iris_binary(self):
+    def _load_iris_binary(self, n_samples=None, noise=0.0):
         """Load Iris dataset and convert to binary classification"""
         data = load_iris()
         X = data.data
         y = (data.target == 0).astype(int)  # Setosa vs others
+        
+        # Handle sampling if requested
+        if n_samples is not None and n_samples < len(X):
+            indices = np.random.choice(len(X), n_samples, replace=False)
+            X = X[indices]
+            y = y[indices]
+        
+        # Add noise if requested
+        if noise > 0:
+            X += noise * np.random.randn(*X.shape)
+            
         feature_names = data.feature_names
         description = "Iris dataset converted to binary classification (Setosa vs others)."
         return X, y, feature_names, description
 
-    def _load_wine_binary(self):
+    def _load_wine_binary(self, n_samples=None, noise=0.0):
         """Load Wine dataset and convert to binary classification"""
         data = load_wine()
         X = data.data
         y = (data.target == 0).astype(int)  # Class 0 vs others
+        
+        # Handle sampling if requested
+        if n_samples is not None and n_samples < len(X):
+            indices = np.random.choice(len(X), n_samples, replace=False)
+            X = X[indices]
+            y = y[indices]
+        
+        # Add noise if requested
+        if noise > 0:
+            X += noise * np.random.randn(*X.shape)
+            
         feature_names = data.feature_names
         description = "Wine dataset converted to binary classification (Class 0 vs others)."
         return X, y, feature_names, description
 
-    def _load_breast_cancer(self):
+    def _load_breast_cancer(self, n_samples=None, noise=0.0):
         """Load Breast Cancer dataset"""
         data = load_breast_cancer()
         X = data.data
         y = data.target
+        
+        # Handle sampling if requested
+        if n_samples is not None and n_samples < len(X):
+            indices = np.random.choice(len(X), n_samples, replace=False)
+            X = X[indices]
+            y = y[indices]
+        
+        # Add noise if requested
+        if noise > 0:
+            X += noise * np.random.randn(*X.shape)
+            
         feature_names = data.feature_names
         description = "Breast Cancer Wisconsin dataset for binary classification."
         return X, y, feature_names, description
 
-    def _load_digits_binary(self):
+    def _load_digits_binary(self, n_samples=None, noise=0.0):
         """Load Digits dataset and convert to binary classification"""
         data = load_digits()
         X = data.data
         y = (data.target % 2 == 0).astype(int)  # Even vs odd digits
+        
+        # Handle sampling if requested
+        if n_samples is not None and n_samples < len(X):
+            indices = np.random.choice(len(X), n_samples, replace=False)
+            X = X[indices]
+            y = y[indices]
+        
+        # Add noise if requested
+        if noise > 0:
+            X += noise * np.random.randn(*X.shape)
+            
         feature_names = [f'pixel_{i}' for i in range(X.shape[1])]
         description = "Digits dataset converted to binary classification (Even vs Odd)."
         return X, y, feature_names, description
@@ -176,13 +220,13 @@ class EnhancedDatasetManager:
         self.target_name = 'Target'
         self.description = description
         
-        # Calculate metadata
+        # Calculate metadata (convert numpy types to native Python types for JSON serialization)
         self.metadata = {
-            'n_samples': X.shape[0],
-            'n_features': X.shape[1],
-            'n_classes': len(np.unique(y)),
-            'class_distribution': np.bincount(y) / len(y),
-            'missing_values': np.isnan(X).sum() if X.dtype.kind in 'fc' else 0,
+            'n_samples': int(X.shape[0]),
+            'n_features': int(X.shape[1]),
+            'n_classes': int(len(np.unique(y))),
+            'class_distribution': (np.bincount(y) / len(y)).tolist(),
+            'missing_values': int(np.isnan(X).sum()) if X.dtype.kind in 'fc' else 0,
             'feature_types': self._infer_feature_types(X),
             'dataset_complexity': self._calculate_complexity(X, y)
         }
@@ -237,9 +281,9 @@ class EnhancedDatasetManager:
         avg_overlap = np.mean(overlaps) if overlaps else 0.0
         
         return {
-            'linear_separability': linear_score,
-            'feature_overlap': avg_overlap,
-            'overall': (linear_score + (1 - avg_overlap)) / 2
+            'linear_separability': float(linear_score),
+            'feature_overlap': float(avg_overlap),
+            'overall': float((linear_score + (1 - avg_overlap)) / 2)
         }
 
     def preprocess_data(self, test_size=0.2, handle_imbalance=None, scale=True):

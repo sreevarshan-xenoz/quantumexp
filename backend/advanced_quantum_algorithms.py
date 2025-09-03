@@ -57,7 +57,7 @@ class QuantumApproximateOptimization(QuantumAlgorithm):
     For solving combinatorial optimization problems
     """
     
-    def __init__(self, num_qubits: int, problem_hamiltonian: SparsePauliOp, p: int = 1):
+    def __init__(self, num_qubits: int, problem_hamiltonian: 'SparsePauliOp', p: int = 1):
         super().__init__(num_qubits)
         self.problem_hamiltonian = problem_hamiltonian
         self.mixer_hamiltonian = self._create_mixer_hamiltonian()
@@ -65,7 +65,7 @@ class QuantumApproximateOptimization(QuantumAlgorithm):
         self.optimal_params = None
         self.optimal_value = None
     
-    def _create_mixer_hamiltonian(self) -> SparsePauliOp:
+    def _create_mixer_hamiltonian(self) -> 'SparsePauliOp':
         """Create the mixer Hamiltonian (sum of X gates)"""
         pauli_list = []
         for i in range(self.num_qubits):
@@ -156,7 +156,7 @@ class VariationalQuantumEigensolver(QuantumAlgorithm):
     For finding ground state energies of quantum systems
     """
     
-    def __init__(self, num_qubits: int, hamiltonian: SparsePauliOp, ansatz_type: str = 'RealAmplitudes'):
+    def __init__(self, num_qubits: int, hamiltonian: 'SparsePauliOp', ansatz_type: str = 'RealAmplitudes'):
         super().__init__(num_qubits)
         self.hamiltonian = hamiltonian
         self.ansatz_type = ansatz_type
