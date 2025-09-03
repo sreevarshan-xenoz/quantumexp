@@ -23,7 +23,7 @@ from sklearn.datasets import make_circles, make_moons, make_blobs, make_classifi
 try:
     from dataset_manager import EnhancedDatasetManager
 except ImportError as e:
-    logger.warning(f"Could not import EnhancedDatasetManager: {e}")
+    print(f"Warning: Could not import EnhancedDatasetManager: {e}")
     EnhancedDatasetManager = None
 from sklearn.model_selection import train_test_split, learning_curve
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
