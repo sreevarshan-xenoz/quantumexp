@@ -6,7 +6,8 @@ import ModelSelector from '../components/ModelSelector';
 import ParameterSlider from '../components/ParameterSlider';
 import ProgressIndicator from '../components/ProgressIndicator';
 import SimulationVisualizationTabs from '../components/SimulationVisualizationTabs';
-import { runSimulation, generateDatasetPreview } from '../api/simulation';
+import HyperparameterOptimizer from '../components/HyperparameterOptimizer';
+import { runSimulation, generateDatasetPreview, optimizeHyperparameters } from '../api/simulation';
 
 const Simulation = () => {
   const navigate = useNavigate();
@@ -25,6 +26,8 @@ const Simulation = () => {
   const [progress, setProgress] = useState(0);
   const [datasetPreview, setDatasetPreview] = useState(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [showOptimizer, setShowOptimizer] = useState(false);
   
   const progressInterval = useRef(null);
 
@@ -101,6 +104,30 @@ const Simulation = () => {
       clearInterval(progressInterval.current);
       setIsRunning(false);
       setProgress(0);
+    }
+  };
+
+  const handleOptimizeHyperparameters = async (optimizationConfig) => {
+    setIsOptimizing(true);
+    
+    try {
+      const results = await optimizeHyperparameters({
+        datasetType,
+        noiseLevel,
+        sampleSize,
+        quantumFramework,
+        quantumModel,
+        classicalModel,
+        featureMap,
+        ...optimizationConfig
+      });
+      
+      return results;
+    } catch (error) {
+      console.error('Optimization error:', error);
+      throw error;
+    } finally {
+      setIsOptimizing(false);
     }
   };
 
@@ -249,7 +276,7 @@ const Simulation = () => {
               </div>
             </div>
 
-            <div className="card animate-slide-up">
+            <div className="card animate-slide-up space-y-4">
               <button
                 className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 ${
                   isRunning 
@@ -268,6 +295,16 @@ const Simulation = () => {
                   'Run Simulation'
                 )}
               </button>
+
+              <button
+                className="w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                onClick={() => setShowOptimizer(!showOptimizer)}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <span>🚀</span>
+                  <span>{showOptimizer ? 'Hide' : 'Show'} Hyperparameter Optimizer</span>
+                </div>
+              </button>
             </div>
           </div>
 
@@ -282,6 +319,15 @@ const Simulation = () => {
                 featureMap={featureMap}
               />
             </div>
+
+            {showOptimizer && (
+              <div className="animate-slide-up">
+                <HyperparameterOptimizer 
+                  onOptimize={handleOptimizeHyperparameters}
+                  isOptimizing={isOptimizing}
+                />
+              </div>
+            )}
 
             {isRunning && (
               <div className="card animate-slide-up">
