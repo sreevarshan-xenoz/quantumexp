@@ -163,6 +163,12 @@ const Results = () => {
             </div>
           </div>
           <div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Quantum Framework</span>
+            <div className="font-medium text-gray-800 dark:text-gray-200 capitalize">
+              {parameters.quantumFramework || 'N/A'}
+            </div>
+          </div>
+          <div>
             <span className="text-sm text-gray-600 dark:text-gray-400">Noise Level</span>
             <div className="font-medium text-gray-800 dark:text-gray-200">
               {parameters.noiseLevel !== undefined ? parameters.noiseLevel : 'N/A'}
@@ -172,6 +178,12 @@ const Results = () => {
             <span className="text-sm text-gray-600 dark:text-gray-400">Feature Map</span>
             <div className="font-medium text-gray-800 dark:text-gray-200 uppercase">
               {parameters.featureMap || 'N/A'}
+            </div>
+          </div>
+          <div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Quantum Model</span>
+            <div className="font-medium text-gray-800 dark:text-gray-200 uppercase">
+              {parameters.quantumModel || 'N/A'}
             </div>
           </div>
         </div>

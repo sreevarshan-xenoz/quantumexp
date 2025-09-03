@@ -14,6 +14,7 @@ const Simulation = () => {
   const [datasetType, setDatasetType] = useState('circles');
   const [noiseLevel, setNoiseLevel] = useState(0.2);
   const [sampleSize, setSampleSize] = useState(1000);
+  const [quantumFramework, setQuantumFramework] = useState('qiskit');
   const [quantumModel, setQuantumModel] = useState('vqc');
   const [classicalModel, setClassicalModel] = useState('logistic');
   const [featureMap, setFeatureMap] = useState('zz');
@@ -67,6 +68,7 @@ const Simulation = () => {
         datasetType,
         noiseLevel,
         sampleSize,
+        quantumFramework,
         quantumModel,
         classicalModel,
         featureMap
@@ -84,6 +86,7 @@ const Simulation = () => {
               datasetType, 
               noiseLevel, 
               sampleSize, 
+              quantumFramework,
               quantumModel, 
               classicalModel,
               featureMap 
@@ -183,6 +186,34 @@ const Simulation = () => {
                 Model Selection
               </h2>
               
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center">
+                  <div className="w-2 h-2 bg-indigo-500 rounded-full mr-2"></div>
+                  Quantum Framework
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'qiskit', name: 'Qiskit', description: 'IBM Quantum Framework' },
+                    { id: 'pennylane', name: 'PennyLane', description: 'Xanadu Quantum ML' }
+                  ].map(framework => (
+                    <button
+                      key={framework.id}
+                      className={`p-3 rounded-lg text-left transition-all duration-200 ${
+                        quantumFramework === framework.id 
+                          ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg' 
+                          : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                      }`}
+                      onClick={() => setQuantumFramework(framework.id)}
+                    >
+                      <div className="font-medium text-sm">{framework.name}</div>
+                      <div className={`text-xs ${quantumFramework === framework.id ? 'text-indigo-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                        {framework.description}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <ModelSelector 
                 quantumModel={quantumModel}
                 classicalModel={classicalModel}
