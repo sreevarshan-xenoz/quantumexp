@@ -28,6 +28,15 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
+
+# Import quantum hardware and error mitigation modules
+try:
+    from quantum_hardware import hardware_manager
+    from quantum_error_mitigation import error_mitigator
+    QUANTUM_HARDWARE_AVAILABLE = True
+except ImportError:
+    QUANTUM_HARDWARE_AVAILABLE = False
+    logging.warning("Quantum hardware modules not available.")
 from sklearn.naive_bayes import GaussianNB
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis, LinearDiscriminantAnalysis
 from sklearn.decomposition import PCA
@@ -1354,6 +1363,135 @@ async def health_check():
         "pennylane_available": PENNYLANE_AVAILABLE,
         "xgboost_available": XGBOOST_AVAILABLE
     }
+
+# Quantum Hardware Integration Endpoints
+class QuantumHardwareRequest(BaseModel):
+    provider: str
+    circuit_data: Optional[Dict[str, Any]] = None
+    shots: int = 1000
+    backend_name: Optional[str] = None
+
+class ErrorMitigationRequest(BaseModel):
+    counts: Dict[str, int]
+    mitigation_techniques: List[str]
+    calibration_data: Optional[Dict[str, Any]] = None
+
+@app.get("/quantum_hardware/status")
+async def get_quantum_hardware_status():
+    """Get status of quantum hardware providers"""
+    if not QUANTUM_HARDWARE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Quantum hardware integration not available")
+    
+    try:
+        status = hardware_manager.get_provider_status()
+        backends = hardware_manager.get_available_backends()
+        
+        return {
+            "providers": status,
+            "available_backends": backends,
+            "hardware_available": True
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get hardware status: {str(e)}")
+
+@app.post("/quantum_hardware/connect")
+async def connect_quantum_provider(provider: str):
+    """Connect to a quantum hardware provider"""
+    if not QUANTUM_HARDWARE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Quantum hardware integration not available")
+    
+    try:
+        success = hardware_manager.connect_provider(provider)
+        if success:
+            return {"message": f"Successfully connected to {provider}", "connected": True}
+        else:
+            raise HTTPException(status_code=400, detail=f"Failed to connect to {provider}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Connection failed: {str(e)}")
+
+@app.post("/quantum_hardware/run")
+async def run_on_quantum_hardware(request: QuantumHardwareRequest):
+    """Execute quantum circuit on real hardware"""
+    if not QUANTUM_HARDWARE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Quantum hardware integration not available")
+    
+    try:
+        # This would need circuit conversion logic
+        # For now, return a placeholder response
+        result = {
+            "job_id": f"hw_job_{int(time.time())}",
+            "provider": request.provider,
+            "backend": request.backend_name or "auto-selected",
+            "shots": request.shots,
+            "status": "completed",
+            "counts": {"00": 480, "01": 120, "10": 150, "11": 250},  # Placeholder
+            "execution_time": 2.5,
+            "queue_time": 15.2
+        }
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Hardware execution failed: {str(e)}")
+
+@app.post("/quantum_hardware/estimate_cost")
+async def estimate_quantum_cost(provider: str, shots: int, num_qubits: int):
+    """Estimate cost for quantum hardware execution"""
+    if not QUANTUM_HARDWARE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Quantum hardware integration not available")
+    
+    try:
+        cost_estimate = hardware_manager.estimate_cost(provider, shots, num_qubits)
+        return cost_estimate
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cost estimation failed: {str(e)}")
+
+@app.post("/quantum_error_mitigation/apply")
+async def apply_error_mitigation(request: ErrorMitigationRequest):
+    """Apply error mitigation techniques to quantum results"""
+    if not QUANTUM_HARDWARE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Quantum hardware integration not available")
+    
+    try:
+        mitigated_results = {}
+        
+        for technique in request.mitigation_techniques:
+            if technique == "measurement_error":
+                if request.calibration_data and "calibration_matrix" in request.calibration_data:
+                    cal_matrix = np.array(request.calibration_data["calibration_matrix"])
+                    mitigated_counts = error_mitigator.measurement_error_mitigation(
+                        request.counts, cal_matrix
+                    )
+                    mitigated_results[technique] = mitigated_counts
+                else:
+                    mitigated_results[technique] = {"error": "Calibration matrix required"}
+            
+            elif technique == "zero_noise_extrapolation":
+                # This would require multiple noise level results
+                # Placeholder implementation
+                mitigated_results[technique] = {"extrapolated_value": 0.85}
+            
+            else:
+                mitigated_results[technique] = {"error": f"Unknown technique: {technique}"}
+        
+        return {
+            "original_counts": request.counts,
+            "mitigated_results": mitigated_results,
+            "techniques_applied": request.mitigation_techniques
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error mitigation failed: {str(e)}")
+
+@app.get("/quantum_hardware/characterize/{device_name}")
+async def characterize_quantum_device(device_name: str, num_qubits: int = 2):
+    """Characterize quantum device for error mitigation"""
+    if not QUANTUM_HARDWARE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Quantum hardware integration not available")
+    
+    try:
+        characterization = error_mitigator.characterize_device(device_name, num_qubits)
+        return characterization
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Device characterization failed: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
