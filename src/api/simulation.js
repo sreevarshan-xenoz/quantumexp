@@ -141,46 +141,7 @@ const generateMockResults = (params) => {
   };
 };
 
-// Optimize hyperparameters
-export const optimizeHyperparameters = async (params) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/optimize_hyperparameters`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Optimization API error:', error);
-    // Fallback to mock results if API fails
-    return generateMockOptimizationResults(params);
-  }
-};
 
-// Fallback mock optimization results
-const generateMockOptimizationResults = (params) => {
-  return {
-    best_score: 0.85 + Math.random() * 0.1,
-    best_params: {
-      reps: Math.floor(Math.random() * 5) + 1,
-      optimizer_maxiter: [50, 100, 150, 200][Math.floor(Math.random() * 4)],
-      n_estimators: [50, 100, 150, 200][Math.floor(Math.random() * 4)],
-      max_depth: Math.floor(Math.random() * 8) + 3
-    },
-    best_model_type: Math.random() > 0.5 ? 'quantum' : 'classical',
-    improvement: Math.random() * 0.1,
-    iterations_completed: params.max_iterations || 20,
-    optimization_method: params.optimization_method || 'grid_search'
-  };
-};
 
 // Generate mock plot data (in real implementation, this would come from backend)
 const generateMockPlot = (title) => {
