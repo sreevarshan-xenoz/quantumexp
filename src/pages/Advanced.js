@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import HyperparameterOptimizer from '../components/HyperparameterOptimizer';
 import OptimizationResults from '../components/OptimizationResults';
+import QuantumHardwareManager from '../components/QuantumHardwareManager';
 import { optimizeHyperparameters } from '../api/simulation';
 
 const Advanced = () => {
@@ -30,6 +31,18 @@ const Advanced = () => {
       status: 'Available'
     },
     {
+      icon: '⚛️',
+      title: 'Quantum Hardware Integration',
+      description: 'Connect to real quantum computers from IBM, IonQ, and other providers',
+      status: 'Available'
+    },
+    {
+      icon: '🛡️',
+      title: 'Quantum Error Mitigation',
+      description: 'Advanced error correction and noise mitigation for quantum hardware',
+      status: 'Available'
+    },
+    {
       icon: '🧠',
       title: 'Neural Architecture Search',
       description: 'Automated quantum circuit architecture optimization',
@@ -45,18 +58,6 @@ const Advanced = () => {
       icon: '⚡',
       title: 'Real-time Optimization',
       description: 'Live parameter adjustment with immediate feedback',
-      status: 'Coming Soon'
-    },
-    {
-      icon: '🔬',
-      title: 'Quantum Error Analysis',
-      description: 'Analyze the impact of quantum noise on model performance',
-      status: 'Coming Soon'
-    },
-    {
-      icon: '🎯',
-      title: 'Transfer Learning',
-      description: 'Transfer optimized parameters between similar datasets',
       status: 'Coming Soon'
     }
   ];
@@ -109,6 +110,11 @@ const Advanced = () => {
             onOptimize={handleOptimization}
             isOptimizing={isOptimizing}
           />
+        </div>
+
+        {/* Quantum Hardware Integration Section */}
+        <div className="mb-12">
+          <QuantumHardwareManager />
         </div>
 
         {/* Advanced Analytics Preview */}
