@@ -74,10 +74,10 @@ const ModelSelector = ({ quantumModel, classicalModel, onQuantumChange, onClassi
       <div>
         <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 flex items-center">
           <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-          Classical Model
+          Classical Model ({classicalModels.length} algorithms)
         </h3>
         <div className="max-h-64 overflow-y-auto pr-2">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1">
             {classicalModels.map(model => (
               <button
                 key={model.id}
@@ -87,6 +87,7 @@ const ModelSelector = ({ quantumModel, classicalModel, onQuantumChange, onClassi
                     : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
                 }`}
                 onClick={() => onClassicalChange(model.id)}
+                title={model.description}
               >
                 <div className="font-medium text-xs">{model.name}</div>
                 <div className={`text-xs ${classicalModel === model.id ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'} truncate`}>
@@ -95,6 +96,9 @@ const ModelSelector = ({ quantumModel, classicalModel, onQuantumChange, onClassi
               </button>
             ))}
           </div>
+        </div>
+        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          Includes: Tree-based, Boosting, Neural Networks, Linear Models, and more
         </div>
       </div>
     </div>
