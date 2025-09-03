@@ -9,6 +9,7 @@ import SimulationVisualizationTabs from '../components/SimulationVisualizationTa
 import HyperparameterOptimizer from '../components/HyperparameterOptimizer';
 import EnhancedDatasetPreview from '../components/EnhancedDatasetPreview';
 import DatasetComparison from '../components/DatasetComparison';
+import DatasetSelector from '../components/DatasetSelector';
 import { runSimulation, generateDatasetPreview, optimizeHyperparameters } from '../api/simulation';
 
 const Simulation = () => {
@@ -26,18 +27,27 @@ const Simulation = () => {
   const [showDatasetComparison, setShowDatasetComparison] = useState(false);
   const [previewDatasets, setPreviewDatasets] = useState({});
   const [selectedDatasetFromPreview, setSelectedDatasetFromPreview] = useState(null);
+  const [datasetConfig, setDatasetConfig] = useState({
+    datasetName: 'iris_binary',
+    nSamples: 1000,
+    noiseLevel: 0.1,
+    featureEngineering: null,
+    handleImbalance: null
+  });
 
   // Handle dataset selection from preview
-  const handleDatasetFromPreview = (dataset, datasetName) => {
-    setSelectedDatasetFromPreview(dataset);
-    if (datasetName) {
-      setDatasetType(datasetName);
+  const handleDatasetFromPreview = (datasetSelection) => {
+    setSelectedDatasetFromPreview(datasetSelection);
+    setDatasetConfig(datasetSelection);
+    if (datasetSelection.datasetName) {
+      setDatasetType(datasetSelection.datasetName);
     }
-    if (dataset && dataset.X) {
-      setSampleSize(dataset.X.length);
+    if (datasetSelection.nSamples) {
+      setSampleSize(datasetSelection.nSamples);
     }
-    // Optionally hide the preview after selection
-    // setShowDatasetPreview(false);
+    if (datasetSelection.noiseLevel !== undefined) {
+      setNoiseLevel(datasetSelection.noiseLevel);
+    }
   };
   const [classicalModel, setClassicalModel] = useState('logistic');
   const [featureMap, setFeatureMap] = useState('zz');
@@ -90,9 +100,11 @@ const Simulation = () => {
 
     try {
       const results = await runSimulation({
-        datasetType,
-        noiseLevel,
-        sampleSize,
+        datasetType: datasetConfig.datasetName || datasetType,
+        noiseLevel: datasetConfig.noiseLevel || noiseLevel,
+        sampleSize: datasetConfig.nSamples || sampleSize,
+        featureEngineering: datasetConfig.featureEngineering,
+        handleImbalance: datasetConfig.handleImbalance,
         quantumFramework,
         quantumModel,
         classicalModel,
@@ -133,9 +145,11 @@ const Simulation = () => {
     
     try {
       const results = await optimizeHyperparameters({
-        datasetType,
-        noiseLevel,
-        sampleSize,
+        datasetType: datasetConfig.datasetName || datasetType,
+        noiseLevel: datasetConfig.noiseLevel || noiseLevel,
+        sampleSize: datasetConfig.nSamples || sampleSize,
+        featureEngineering: datasetConfig.featureEngineering,
+        handleImbalance: datasetConfig.handleImbalance,
         quantumFramework,
         quantumModel,
         classicalModel,
@@ -202,24 +216,7 @@ const Simulation = () => {
             </div>
             
             <EnhancedDatasetPreview
-              onDatasetSelect={(dataset) => {
-                setSelectedDatasetFromPreview(dataset);
-                // Update simulation parameters based on selected dataset
-                if (dataset && dataset.X && dataset.y) {
-                  setSampleSize(dataset.X.length);
-                }
-              }}
-              onParametersChange={(params) => {
-                setDatasetType(params.datasetType);
-                setNoiseLevel(params.noiseLevel);
-                setSampleSize(params.sampleSize);
-                if (params.data) {
-                  setPreviewDatasets(prev => ({
-                    ...prev,
-                    [params.datasetType]: params.data
-                  }));
-                }
-              }}
+              onDatasetSelect={handleDatasetFromPreview}
             />
             
             {showDatasetComparison && (
@@ -254,53 +251,23 @@ const Simulation = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Panel - Controls */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="card animate-slide-up">
-              <h2 className="text-xl font-semibold mb-6 flex items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                Dataset Configuration
-              </h2>
-              
-              <div className="space-y-6">
-                <div>
-                  <h3 className="font-medium mb-3 text-gray-700 dark:text-gray-300">Dataset Type</h3>
-                  <div className="grid grid-cols-1 gap-2">
-                    {datasetOptions.map(option => (
-                      <button
-                        key={option.id}
-                        className={`p-3 rounded-lg text-left transition-all duration-200 ${
-                          datasetType === option.id 
-                            ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' 
-                            : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
-                        }`}
-                        onClick={() => setDatasetType(option.id)}
-                      >
-                        <div className="font-medium">{option.name}</div>
-                        <div className={`text-sm ${datasetType === option.id ? 'text-purple-100' : 'text-gray-500 dark:text-gray-400'}`}>
-                          {option.description}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            <div className="animate-slide-up">
+              <DatasetSelector
+                onDatasetChange={handleDatasetFromPreview}
+                initialDataset={datasetConfig.datasetName}
+              />
+            </div>
 
-                <ParameterSlider 
-                  label="Noise Level"
-                  value={noiseLevel}
-                  min={0}
-                  max={0.5}
-                  step={0.05}
-                  onChange={setNoiseLevel}
-                />
-
-                <ParameterSlider 
-                  label="Sample Size"
-                  value={sampleSize}
-                  min={100}
-                  max={2000}
-                  step={100}
-                  onChange={setSampleSize}
-                />
-              </div>
+            {/* Enhanced Dataset Visualization */}
+            <div className="animate-slide-up">
+              <DatasetVisualizer
+                data={datasetPreview?.data}
+                datasetType={datasetType}
+                isLoading={isLoadingPreview}
+                datasetInfo={selectedDatasetFromPreview?.datasetInfo}
+                showEnhancedView={showDatasetPreview}
+                onToggleEnhancedView={() => setShowDatasetPreview(!showDatasetPreview)}
+              />
             </div>
 
             <div className="card animate-slide-up">

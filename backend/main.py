@@ -130,6 +130,9 @@ class SimulationRequest(BaseModel):
     featureMap: str = "zz"
     optimizer: str = "spsa"
     hybridModel: str = "xgboost"
+    # Enhanced dataset parameters
+    featureEngineering: Optional[str] = None
+    handleImbalance: Optional[str] = None
 
 class HyperparameterOptimizationRequest(BaseModel):
     datasetType: str = "circles"
@@ -138,6 +141,9 @@ class HyperparameterOptimizationRequest(BaseModel):
     method: str = "grid_search"  # grid_search, random_search, bayesian, optuna
     cv_folds: int = 5
     scoring: str = "accuracy"
+    # Enhanced dataset parameters
+    featureEngineering: Optional[str] = None
+    handleImbalance: Optional[str] = None
     n_trials: int = 50
     timeout: int = 300
     optimize_classical: bool = True
@@ -1012,12 +1018,26 @@ async def run_simulation(request: SimulationRequest):
     try:
         logger.info(f"Starting simulation with parameters: {request.dict()}")
         
-        # Generate dataset
-        X, y = simulator.generate_dataset(
-            request.datasetType, 
-            request.sampleSize, 
-            request.noiseLevel
-        )
+        # Generate dataset using enhanced dataset manager if available
+        if simulator.dataset_manager and hasattr(request, 'featureEngineering'):
+            # Use enhanced dataset manager
+            X, y, feature_names, description = simulator.dataset_manager.load_dataset(
+                request.datasetType, 
+                n_samples=request.sampleSize, 
+                noise=request.noiseLevel
+            )
+            
+            # Apply feature engineering if specified
+            if hasattr(request, 'featureEngineering') and request.featureEngineering:
+                simulator.dataset_manager.feature_engineering(method=request.featureEngineering)
+                X, y = simulator.dataset_manager.X, simulator.dataset_manager.y
+        else:
+            # Fallback to original dataset generation
+            X, y = simulator.generate_dataset(
+                request.datasetType, 
+                request.sampleSize, 
+                request.noiseLevel
+            )
         
         # Split and scale data
         X_train, X_test, y_train, y_test = train_test_split(
