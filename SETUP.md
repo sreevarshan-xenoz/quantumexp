@@ -7,7 +7,7 @@ This guide will help you set up and run the Quantum-Classical ML Simulation Plat
 ### Option 1: Automated Setup (Recommended)
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/sreevarshan-xenoz/quantumexp.git
 cd quantum-ml-simulation
 
 # Run the automated setup script
