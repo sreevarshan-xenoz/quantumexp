@@ -15,10 +15,21 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
+    "start:frontend": "react-scripts start",
+    "start:backend": "cd backend && ./venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000",
+    "start:backend:install": "cd backend && (./venv/bin/pip install -r requirements.txt || echo 'Dependencies already installed') && ./venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
+    "format": "prettier --write src/**/*.{js,jsx,ts,tsx,json,css,md}",
+    "format:check": "prettier --check src/**/*.{js,jsx,ts,tsx,json,css,md}",
+    "type-check": "tsc --noEmit",
+    "test:coverage": "react-scripts test --coverage --watchAll=false",
+    "setup": "npm install && cd backend && python3 -m venv venv && ./venv/bin/pip install -r requirements.txt",
+    "dev": "npm run start"
   },
   "eslintConfig": {
     "extends": [
@@ -41,6 +52,9 @@
   "devDependencies": {
     "autoprefixer": "^10.4.8",
     "postcss": "^8.4.16",
-    "tailwindcss": "^3.1.8"
+    "tailwindcss": "^3.1.8",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "concurrently": "^8.0.0"
   }
 }

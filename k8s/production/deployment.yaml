@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quantum-ml-backend
+  namespace: production
+  labels:
+    app: quantum-ml-backend
+    environment: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: quantum-ml-backend
+  template:
+    metadata:
+      labels:
+        app: quantum-ml-backend
+        environment: production
+    spec:
+      containers:
+      - name: backend
+        image: ghcr.io/your-username/quantumexp-backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DEBUG
+          value: "false"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: CORS_ORIGINS
+          value: "https://quantumexp.com,https://www.quantumexp.com"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quantum-ml-backend-service
+  namespace: production
+spec:
+  selector:
+    app: quantum-ml-backend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quantum-ml-frontend
+  namespace: production
+  labels:
+    app: quantum-ml-frontend
+    environment: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: quantum-ml-frontend
+  template:
+    metadata:
+      labels:
+        app: quantum-ml-frontend
+        environment: production
+    spec:
+      containers:
+      - name: frontend
+        image: ghcr.io/your-username/quantumexp-frontend:latest
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quantum-ml-frontend-service
+  namespace: production
+spec:
+  selector:
+    app: quantum-ml-frontend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 3000
+  type: ClusterIP

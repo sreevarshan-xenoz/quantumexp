@@ -46,6 +46,55 @@ A modern, interactive web application for comparing quantum and classical machin
 - **XGBoost**: Gradient boosting framework
 - **NumPy/Pandas**: Data manipulation and numerical computing
 
+## 🚀 Quick Start
+
+### Option 1: One-Command Setup (Recommended)
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd quantumexp
+
+# Run the setup script
+./setup.sh
+
+# Start both frontend and backend
+npm start
+```
+
+### Option 2: Manual Setup
+```bash
+# Install Node.js dependencies
+npm install --legacy-peer-deps
+
+# Set up Python backend
+cd backend
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cd ..
+
+# Start both services
+npm start
+```
+
+### Access the Application
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs
+
+### Available Scripts
+```bash
+npm start                    # Start both frontend and backend
+npm run start:frontend       # Start only the React frontend
+npm run start:backend        # Start only the FastAPI backend
+npm run setup               # Install all dependencies
+npm run dev                 # Alias for npm start
+npm run build               # Build the React app for production
+npm run test                # Run React tests
+npm run lint                # Lint JavaScript/React code
+npm run format              # Format code with Prettier
+```
+
 ## 📦 Installation
 
 ### Prerequisites
