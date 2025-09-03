@@ -230,33 +230,33 @@ const AdvancedGraphAnalytics = ({ simulationData, algorithmResults }) => {
 
     switch (selectedGraph) {
       case 'convergence':
-        renderConvergenceGraph(g, width, height);
+        renderConvergenceGraph(g, width, height, margin);
         break;
       case 'quantum_advantage':
-        renderQuantumAdvantageGraph(g, width, height);
+        renderQuantumAdvantageGraph(g, width, height, margin);
         break;
       case 'parameter_landscape':
-        renderParameterLandscapeGraph(g, width, height);
+        renderParameterLandscapeGraph(g, width, height, margin);
         break;
       case 'noise_analysis':
-        renderNoiseAnalysisGraph(g, width, height);
+        renderNoiseAnalysisGraph(g, width, height, margin);
         break;
       case 'feature_correlation':
-        renderFeatureCorrelationGraph(g, width, height);
+        renderFeatureCorrelationGraph(g, width, height, margin);
         break;
       case 'algorithm_comparison':
-        renderAlgorithmComparisonGraph(g, width, height);
+        renderAlgorithmComparisonGraph(g, width, height, margin);
         break;
       case 'quantum_circuit_depth':
-        renderCircuitDepthGraph(g, width, height);
+        renderCircuitDepthGraph(g, width, height, margin);
         break;
       case 'error_mitigation':
-        renderErrorMitigationGraph(g, width, height);
+        renderErrorMitigationGraph(g, width, height, margin);
         break;
     }
   };
 
-  const renderConvergenceGraph = (g, width, height) => {
+  const renderConvergenceGraph = (g, width, height, margin) => {
     if (!graphData) return;
 
     const xScale = d3.scaleLinear()
@@ -315,7 +315,7 @@ const AdvancedGraphAnalytics = ({ simulationData, algorithmResults }) => {
       .text("Iteration");
   };
 
-  const renderQuantumAdvantageGraph = (g, width, height) => {
+  const renderQuantumAdvantageGraph = (g, width, height, margin) => {
     if (!graphData) return;
 
     const xScale = d3.scaleLinear()
@@ -402,7 +402,68 @@ const AdvancedGraphAnalytics = ({ simulationData, algorithmResults }) => {
       .text("Problem Size");
   };
 
-  const renderFeatureCorrelationGraph = (g, width, height) => {
+  const renderParameterLandscapeGraph = (g, width, height, margin) => {
+    if (!graphData) return;
+
+    const xScale = d3.scaleLinear()
+      .domain(d3.extent(graphData, d => d.x))
+      .range([0, width]);
+
+    const yScale = d3.scaleLinear()
+      .domain(d3.extent(graphData, d => d.y))
+      .range([height, 0]);
+
+    const colorScale = d3.scaleSequential(d3.interpolateViridis)
+      .domain(d3.extent(graphData, d => d.z));
+
+    // Create contour plot
+    const contours = d3.contours()
+      .size([30, 30])
+      .thresholds(10);
+
+    // Convert data to grid format
+    const values = new Array(30 * 30);
+    graphData.forEach((d, i) => {
+      values[i] = d.z;
+    });
+
+    const contourData = contours(values);
+
+    // Add contour paths
+    g.selectAll(".contour")
+      .data(contourData)
+      .enter().append("path")
+      .attr("class", "contour")
+      .attr("d", d3.geoPath())
+      .attr("fill", d => colorScale(d.value))
+      .attr("opacity", 0.6)
+      .attr("stroke", "white")
+      .attr("stroke-width", 0.5);
+
+    // Add axes
+    g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(xScale));
+
+    g.append("g")
+      .call(d3.axisLeft(yScale));
+
+    // Labels
+    g.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 0 - margin.left)
+      .attr("x", 0 - (height / 2))
+      .attr("dy", "1em")
+      .style("text-anchor", "middle")
+      .text("Parameter 2");
+
+    g.append("text")
+      .attr("transform", `translate(${width / 2}, ${height + margin.bottom})`)
+      .style("text-anchor", "middle")
+      .text("Parameter 1");
+  };
+
+  const renderFeatureCorrelationGraph = (g, width, height, margin) => {
     if (!graphData) return;
 
     const { features, matrix } = graphData;
@@ -456,7 +517,7 @@ const AdvancedGraphAnalytics = ({ simulationData, algorithmResults }) => {
     });
   };
 
-  const renderAlgorithmComparisonGraph = (g, width, height) => {
+  const renderAlgorithmComparisonGraph = (g, width, height, margin) => {
     if (!graphData) return;
 
     const centerX = width / 2;
@@ -556,7 +617,7 @@ const AdvancedGraphAnalytics = ({ simulationData, algorithmResults }) => {
     });
   };
 
-  const renderNoiseAnalysisGraph = (g, width, height) => {
+  const renderNoiseAnalysisGraph = (g, width, height, margin) => {
     if (!graphData) return;
 
     const xScale = d3.scaleLinear()
@@ -627,7 +688,7 @@ const AdvancedGraphAnalytics = ({ simulationData, algorithmResults }) => {
       .text("Noise Level");
   };
 
-  const renderCircuitDepthGraph = (g, width, height) => {
+  const renderCircuitDepthGraph = (g, width, height, margin) => {
     if (!graphData) return;
 
     const xScale = d3.scaleLinear()
@@ -721,7 +782,7 @@ const AdvancedGraphAnalytics = ({ simulationData, algorithmResults }) => {
       .text("Circuit Depth");
   };
 
-  const renderErrorMitigationGraph = (g, width, height) => {
+  const renderErrorMitigationGraph = (g, width, height, margin) => {
     if (!graphData) return;
 
     const xScale = d3.scaleBand()

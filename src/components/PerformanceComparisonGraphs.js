@@ -180,33 +180,33 @@ const PerformanceComparisonGraphs = ({ comparisonData }) => {
 
     switch (selectedComparison) {
       case 'accuracy_vs_time':
-        renderAccuracyVsTime(g, data, width, height);
+        renderAccuracyVsTime(g, data, width, height, margin);
         break;
       case 'scalability_analysis':
-        renderScalabilityAnalysis(g, data, width, height);
+        renderScalabilityAnalysis(g, data, width, height, margin);
         break;
       case 'resource_efficiency':
-        renderResourceEfficiency(g, data, width, height);
+        renderResourceEfficiency(g, data, width, height, margin);
         break;
       case 'noise_robustness':
-        renderNoiseRobustness(g, data, width, height);
+        renderNoiseRobustness(g, data, width, height, margin);
         break;
       case 'quantum_classical_comparison':
-        renderQuantumClassicalComparison(g, data, width, height);
+        renderQuantumClassicalComparison(g, data, width, height, margin);
         break;
       case 'convergence_speed':
-        renderConvergenceSpeed(g, data, width, height);
+        renderConvergenceSpeed(g, data, width, height, margin);
         break;
       case 'cost_benefit_analysis':
-        renderCostBenefitAnalysis(g, data, width, height);
+        renderCostBenefitAnalysis(g, data, width, height, margin);
         break;
       case 'multi_metric_radar':
-        renderMultiMetricRadar(g, data, width, height);
+        renderMultiMetricRadar(g, data, width, height, margin);
         break;
     }
   };
 
-  const renderAccuracyVsTime = (g, data, width, height) => {
+  const renderAccuracyVsTime = (g, data, width, height, margin) => {
     const xScale = d3.scaleLinear()
       .domain(d3.extent(data, d => d.time))
       .range([0, width]);
@@ -271,7 +271,7 @@ const PerformanceComparisonGraphs = ({ comparisonData }) => {
       .text("Training Time (minutes)");
   };
 
-  const renderScalabilityAnalysis = (g, data, width, height) => {
+  const renderScalabilityAnalysis = (g, data, width, height, margin) => {
     const xScale = d3.scaleLog()
       .domain([1, 256])
       .range([0, width]);
@@ -338,7 +338,7 @@ const PerformanceComparisonGraphs = ({ comparisonData }) => {
       .text("Problem Size (log scale)");
   };
 
-  const renderResourceEfficiency = (g, data, width, height) => {
+  const renderResourceEfficiency = (g, data, width, height, margin) => {
     const xScale = d3.scaleLinear()
       .domain(d3.extent(data, d => d.memory))
       .range([0, width]);
@@ -407,7 +407,7 @@ const PerformanceComparisonGraphs = ({ comparisonData }) => {
       .text("Memory Usage (MB)");
   };
 
-  const renderMultiMetricRadar = (g, data, width, height) => {
+  const renderMultiMetricRadar = (g, data, width, height, margin) => {
     const centerX = width / 2;
     const centerY = height / 2;
     const radius = Math.min(width, height) / 2 - 50;
@@ -522,7 +522,7 @@ const PerformanceComparisonGraphs = ({ comparisonData }) => {
     });
   };
 
-  const renderCostBenefitAnalysis = (g, data, width, height) => {
+  const renderCostBenefitAnalysis = (g, data, width, height, margin) => {
     const xScale = d3.scaleLinear()
       .domain(d3.extent(data, d => d.cost))
       .range([0, width]);
@@ -626,7 +626,7 @@ const PerformanceComparisonGraphs = ({ comparisonData }) => {
       .text("Cost ($)");
   };
 
-  const renderConvergenceSpeed = (g, data, width, height) => {
+  const renderConvergenceSpeed = (g, data, width, height, margin) => {
     const xScale = d3.scaleLinear()
       .domain([0, 49])
       .range([0, width]);
@@ -694,7 +694,7 @@ const PerformanceComparisonGraphs = ({ comparisonData }) => {
       .text("Iteration");
   };
 
-  const renderNoiseRobustness = (g, data, width, height) => {
+  const renderNoiseRobustness = (g, data, width, height, margin) => {
     const xScale = d3.scaleLinear()
       .domain([0, 0.45])
       .range([0, width]);
@@ -776,7 +776,7 @@ const PerformanceComparisonGraphs = ({ comparisonData }) => {
       .text("Noise Level");
   };
 
-  const renderQuantumClassicalComparison = (g, data, width, height) => {
+  const renderQuantumClassicalComparison = (g, data, width, height, margin) => {
     // This would render a more complex comparison visualization
     // For now, we'll create a simple bar chart comparison
     const metrics = Object.keys(data.quantum.metrics);
