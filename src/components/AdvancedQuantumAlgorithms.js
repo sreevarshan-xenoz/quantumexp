@@ -108,7 +108,7 @@ const AdvancedQuantumAlgorithms = () => {
         setExecutionResults(result);
       } else {
         const error = await response.json();
-        setExecutionResults({ success: false, error: error.detail });
+        setExecutionResults({ success: false, error: Array.isArray(error.detail) ? error.detail.map(e => e.msg || e).join(', ') : error.detail });
       }
     } catch (error) {
       console.error('Error executing algorithm:', error);
@@ -313,7 +313,7 @@ const AdvancedQuantumAlgorithms = () => {
       return (
         <Alert variant="error">
           <AlertDescription>
-            Execution failed: {executionResults.error}
+            Execution failed: {typeof executionResults.error === 'string' ? executionResults.error : JSON.stringify(executionResults.error)}
           </AlertDescription>
         </Alert>
       );

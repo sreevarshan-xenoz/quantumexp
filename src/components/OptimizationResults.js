@@ -12,7 +12,7 @@ const OptimizationResults = ({ results, onClose }) => {
           <h4 className="font-semibold text-red-600 dark:text-red-400 mb-2 capitalize">
             {modelName} - Error
           </h4>
-          <p className="text-sm text-red-500 dark:text-red-400">{result.error}</p>
+          <p className="text-sm text-red-500 dark:text-red-400">{typeof result.error === 'string' ? result.error : JSON.stringify(result.error)}</p>
         </div>
       );
     }

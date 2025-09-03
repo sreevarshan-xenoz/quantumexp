@@ -66,7 +66,7 @@ const HybridOptimization = () => {
         setOptimizationResults(result);
       } else {
         const error = await response.json();
-        setOptimizationResults({ success: false, error: error.detail });
+        setOptimizationResults({ success: false, error: Array.isArray(error.detail) ? error.detail.map(e => e.msg || e).join(', ') : error.detail });
       }
     } catch (error) {
       console.error('Error running optimization:', error);
@@ -98,7 +98,7 @@ const HybridOptimization = () => {
         setComparisonResults(result);
       } else {
         const error = await response.json();
-        setComparisonResults({ success: false, error: error.detail });
+        setComparisonResults({ success: false, error: Array.isArray(error.detail) ? error.detail.map(e => e.msg || e).join(', ') : error.detail });
       }
     } catch (error) {
       console.error('Error comparing optimizers:', error);
@@ -220,7 +220,7 @@ const HybridOptimization = () => {
       return (
         <Alert variant="error">
           <AlertDescription>
-            Optimization failed: {optimizationResults.error}
+            Optimization failed: {typeof optimizationResults.error === 'string' ? optimizationResults.error : JSON.stringify(optimizationResults.error)}
           </AlertDescription>
         </Alert>
       );
@@ -287,7 +287,7 @@ const HybridOptimization = () => {
       return (
         <Alert variant="error">
           <AlertDescription>
-            Comparison failed: {comparisonResults.error || 'No optimizers succeeded'}
+            Comparison failed: {typeof comparisonResults.error === 'string' ? comparisonResults.error : JSON.stringify(comparisonResults.error) || 'No optimizers succeeded'}
           </AlertDescription>
         </Alert>
       );
@@ -326,7 +326,7 @@ const HybridOptimization = () => {
                 </div>
               ) : (
                 <div className="text-sm text-red-600">
-                  Error: {result.error}
+                  Error: {typeof result.error === 'string' ? result.error : JSON.stringify(result.error)}
                 </div>
               )}
             </div>
