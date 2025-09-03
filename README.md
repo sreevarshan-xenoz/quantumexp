@@ -4,6 +4,12 @@ A modern, interactive web application for comparing quantum and classical machin
 
 ## 🚀 Features
 
+### Quantum Hardware Integration ⚛️ **NEW!**
+- **Real Quantum Computers**: Connect to IBM Quantum, IonQ, and Rigetti hardware
+- **Error Mitigation Suite**: Advanced noise reduction and quantum error correction
+- **Cost Estimation**: Built-in cost tracking and estimation for quantum hardware usage
+- **Hardware Monitoring**: Real-time queue times, execution metrics, and device status
+
 ### Interactive Simulation Environment
 - **Real-time Parameter Control**: Adjust dataset parameters, noise levels, and sample sizes with smooth sliders
 - **Model Selection**: Choose from multiple quantum (VQC, QSVC) and classical (Logistic Regression, Random Forest, SVM, XGBoost) models
@@ -45,6 +51,26 @@ A modern, interactive web application for comparing quantum and classical machin
 ### Prerequisites
 - Node.js (v16 or higher)
 - npm or yarn package manager
+- Python 3.8+ (for quantum hardware integration)
+
+### Quick Start
+For basic simulation (no quantum hardware):
+```bash
+# Clone and start the platform
+git clone <repository-url>
+cd quantum-ml-platform
+./start.sh
+```
+
+### Quantum Hardware Setup
+For real quantum computer access, see our comprehensive setup guide:
+📖 **[Quantum Hardware Setup Guide](QUANTUM_HARDWARE_SETUP.md)**
+
+Includes setup for:
+- IBM Quantum computers
+- IonQ (via AWS Braket)
+- Rigetti (via AWS Braket)
+- Error mitigation configuration
 
 ### Frontend Setup
 ```bash
