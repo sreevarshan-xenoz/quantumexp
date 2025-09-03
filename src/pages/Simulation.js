@@ -7,6 +7,8 @@ import ParameterSlider from '../components/ParameterSlider';
 import ProgressIndicator from '../components/ProgressIndicator';
 import SimulationVisualizationTabs from '../components/SimulationVisualizationTabs';
 import HyperparameterOptimizer from '../components/HyperparameterOptimizer';
+import EnhancedDatasetPreview from '../components/EnhancedDatasetPreview';
+import DatasetComparison from '../components/DatasetComparison';
 import { runSimulation, generateDatasetPreview, optimizeHyperparameters } from '../api/simulation';
 
 const Simulation = () => {
@@ -18,6 +20,25 @@ const Simulation = () => {
   const [sampleSize, setSampleSize] = useState(1000);
   const [quantumFramework, setQuantumFramework] = useState('qiskit');
   const [quantumModel, setQuantumModel] = useState('vqc');
+  
+  // Enhanced dataset preview state
+  const [showDatasetPreview, setShowDatasetPreview] = useState(true);
+  const [showDatasetComparison, setShowDatasetComparison] = useState(false);
+  const [previewDatasets, setPreviewDatasets] = useState({});
+  const [selectedDatasetFromPreview, setSelectedDatasetFromPreview] = useState(null);
+
+  // Handle dataset selection from preview
+  const handleDatasetFromPreview = (dataset, datasetName) => {
+    setSelectedDatasetFromPreview(dataset);
+    if (datasetName) {
+      setDatasetType(datasetName);
+    }
+    if (dataset && dataset.X) {
+      setSampleSize(dataset.X.length);
+    }
+    // Optionally hide the preview after selection
+    // setShowDatasetPreview(false);
+  };
   const [classicalModel, setClassicalModel] = useState('logistic');
   const [featureMap, setFeatureMap] = useState('zz');
   
@@ -156,6 +177,79 @@ const Simulation = () => {
             Configure parameters and run the simulation to compare quantum and classical machine learning models
           </p>
         </div>
+
+        {/* Enhanced Dataset Preview Section */}
+        {showDatasetPreview && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                Dataset Explorer
+              </h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowDatasetComparison(!showDatasetComparison)}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  {showDatasetComparison ? 'Hide Comparison' : 'Compare Datasets'}
+                </button>
+                <button
+                  onClick={() => setShowDatasetPreview(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Hide Preview
+                </button>
+              </div>
+            </div>
+            
+            <EnhancedDatasetPreview
+              onDatasetSelect={(dataset) => {
+                setSelectedDatasetFromPreview(dataset);
+                // Update simulation parameters based on selected dataset
+                if (dataset && dataset.X && dataset.y) {
+                  setSampleSize(dataset.X.length);
+                }
+              }}
+              onParametersChange={(params) => {
+                setDatasetType(params.datasetType);
+                setNoiseLevel(params.noiseLevel);
+                setSampleSize(params.sampleSize);
+                if (params.data) {
+                  setPreviewDatasets(prev => ({
+                    ...prev,
+                    [params.datasetType]: params.data
+                  }));
+                }
+              }}
+            />
+            
+            {showDatasetComparison && (
+              <div className="mt-6">
+                <DatasetComparison
+                  datasets={previewDatasets}
+                  onDatasetSelect={(dataset, name) => {
+                    setSelectedDatasetFromPreview(dataset);
+                    setDatasetType(name);
+                    if (dataset && dataset.X) {
+                      setSampleSize(dataset.X.length);
+                    }
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Show Dataset Preview Button when hidden */}
+        {!showDatasetPreview && (
+          <div className="mb-8 text-center">
+            <button
+              onClick={() => setShowDatasetPreview(true)}
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all shadow-lg"
+            >
+              🔍 Show Enhanced Dataset Preview
+            </button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Panel - Controls */}
