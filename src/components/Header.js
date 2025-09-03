@@ -43,6 +43,19 @@ const Header = () => {
               Results
             </Link>
             <Link
+              to="/advanced"
+              className={`px-3 py-2 rounded-lg transition-all ${
+                isActive('/advanced') 
+                  ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300' 
+                  : 'text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400'
+              }`}
+            >
+              <span className="flex items-center space-x-1">
+                <span>🚀</span>
+                <span>Advanced</span>
+              </span>
+            </Link>
+            <Link
               to="/about"
               className={`px-3 py-2 rounded-lg transition-all ${
                 isActive('/about') 
