@@ -81,7 +81,8 @@ const Simulation = () => {
       setTimeout(() => {
         navigate('/results', { 
           state: { 
-            results, 
+            results: results.results,
+            plots: results.plots,
             parameters: { 
               datasetType, 
               noiseLevel, 
@@ -301,6 +302,17 @@ const Simulation = () => {
                   Simulation Progress
                 </h2>
                 <ProgressIndicator progress={progress} />
+                
+                {progress > 80 && (
+                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span className="text-sm text-blue-700 dark:text-blue-300">
+                        Generating comprehensive visualizations...
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

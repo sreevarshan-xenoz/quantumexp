@@ -1,11 +1,12 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import VisualizationTabs from '../components/VisualizationTabs';
 
 const Results = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const { results, parameters } = location.state || {};
+  const { results, parameters, plots } = location.state || {};
 
   if (!results) {
     return (
@@ -203,8 +204,8 @@ const Results = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
+          <div className="lg:col-span-3">
             <div className="space-y-6">
               {modelTypes.filter(modelType => results[modelType] && results[modelType].accuracy !== undefined).map(modelType => (
                 <ModelResultCard 
@@ -221,6 +222,16 @@ const Results = () => {
             <ParameterSummary />
           </div>
         </div>
+
+        {/* Comprehensive Visualizations */}
+        {plots && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-6 text-center">
+              📊 Comprehensive Analysis Dashboard
+            </h2>
+            <VisualizationTabs plots={plots} results={results} />
+          </div>
+        )}
 
         {/* Performance Insights */}
         <div className="card animate-slide-up">

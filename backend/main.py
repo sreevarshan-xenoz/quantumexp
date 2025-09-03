@@ -18,9 +18,10 @@ from pydantic import BaseModel
 
 # Scikit-learn imports
 from sklearn.datasets import make_circles, make_moons, make_blobs, make_classification
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.model_selection import train_test_split, learning_curve
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_score, confusion_matrix,
+                           roc_curve, auc, precision_recall_curve, average_precision_score)
 from sklearn.linear_model import LogisticRegression, RidgeClassifier, SGDClassifier, Perceptron
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier, ExtraTreesClassifier
 from sklearn.svm import SVC
@@ -29,6 +30,14 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis, LinearDiscriminantAnalysis
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+from sklearn.inspection import permutation_importance, PartialDependenceDisplay
+
+# Additional visualization imports
+import pandas as pd
+import seaborn as sns
+plt.style.use('default')  # Ensure consistent plotting style
 
 # XGBoost
 try:
@@ -416,8 +425,218 @@ class QuantumClassicalMLSimulator:
         
         return f"data:image/png;base64,{img_str}"
     
+    def _fig_to_base64(self, fig):
+        """Convert matplotlib figure to base64 string"""
+        img_buffer = io.BytesIO()
+        fig.savefig(img_buffer, format='png', bbox_inches='tight', dpi=150)
+        img_buffer.seek(0)
+        img_str = base64.b64encode(img_buffer.getvalue()).decode()
+        plt.close(fig)
+        return f"data:image/png;base64,{img_str}"
+
+    def generate_exploratory_plots(self, X, y):
+        """Generate comprehensive data exploration plots"""
+        plots = {}
+        
+        # Convert to DataFrame for easier plotting
+        df = pd.DataFrame(X, columns=[f'Feature {i+1}' for i in range(X.shape[1])])
+        df['Target'] = y
+        
+        # 1. Feature histograms
+        fig, axes = plt.subplots(1, X.shape[1], figsize=(15, 4))
+        if X.shape[1] == 1:
+            axes = [axes]
+        for i, ax in enumerate(axes):
+            ax.hist(X[:, i], bins=30, alpha=0.7, color='skyblue', edgecolor='black')
+            ax.set_title(f'Distribution of Feature {i+1}')
+            ax.set_xlabel('Value')
+            ax.set_ylabel('Frequency')
+        plt.tight_layout()
+        plots['feature_histograms'] = self._fig_to_base64(fig)
+        
+        # 2. Boxplots for outlier detection
+        fig, ax = plt.subplots(figsize=(10, 6))
+        df.boxplot(column=[f'Feature {i+1}' for i in range(X.shape[1])], ax=ax)
+        ax.set_title('Feature Distribution and Outliers')
+        ax.set_ylabel('Value')
+        plots['boxplots'] = self._fig_to_base64(fig)
+        
+        # 3. Correlation heatmap
+        if X.shape[1] > 1:
+            corr_matrix = df.corr()
+            fig, ax = plt.subplots(figsize=(10, 8))
+            sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0, ax=ax)
+            ax.set_title('Feature Correlation Matrix')
+            plots['correlation_heatmap'] = self._fig_to_base64(fig)
+        
+        # 4. PCA visualization
+        if X.shape[1] > 1:
+            pca = PCA(n_components=2)
+            X_pca = pca.fit_transform(X)
+            fig, ax = plt.subplots(figsize=(10, 8))
+            scatter = ax.scatter(X_pca[:, 0], X_pca[:, 1], c=y, cmap='viridis', alpha=0.7)
+            ax.set_title('PCA: 2D Projection of Data')
+            ax.set_xlabel(f'PC1 ({pca.explained_variance_ratio_[0]:.1%} variance)')
+            ax.set_ylabel(f'PC2 ({pca.explained_variance_ratio_[1]:.1%} variance)')
+            plt.colorbar(scatter, ax=ax, label='Class')
+            plots['pca'] = self._fig_to_base64(fig)
+        
+        # 5. t-SNE visualization
+        if X.shape[0] > 50:  # Only for sufficient samples
+            tsne = TSNE(n_components=2, random_state=42, perplexity=min(30, X.shape[0]-1))
+            X_tsne = tsne.fit_transform(X)
+            fig, ax = plt.subplots(figsize=(10, 8))
+            scatter = ax.scatter(X_tsne[:, 0], X_tsne[:, 1], c=y, cmap='viridis', alpha=0.7)
+            ax.set_title('t-SNE: 2D Projection of Data')
+            ax.set_xlabel('t-SNE Component 1')
+            ax.set_ylabel('t-SNE Component 2')
+            plt.colorbar(scatter, ax=ax, label='Class')
+            plots['tsne'] = self._fig_to_base64(fig)
+        
+        return plots
+
+    def generate_evaluation_plots(self, model, X_test, y_test, model_name, is_hybrid=False, quantum_model=None):
+        """Generate comprehensive evaluation plots for classification models"""
+        plots = {}
+        
+        if is_hybrid and quantum_model is not None:
+            # For hybrid model, create hybrid test set
+            quantum_predictions = quantum_model.predict(X_test).reshape(-1, 1)
+            X_test_hybrid = np.hstack((X_test, quantum_predictions))
+            y_pred = model.predict(X_test_hybrid)
+            y_proba = model.predict_proba(X_test_hybrid)[:, 1] if hasattr(model, 'predict_proba') else None
+        else:
+            y_pred = model.predict(X_test)
+            y_proba = model.predict_proba(X_test)[:, 1] if hasattr(model, 'predict_proba') else None
+        
+        # 1. Confusion Matrix
+        cm = confusion_matrix(y_test, y_pred)
+        fig, ax = plt.subplots(figsize=(8, 6))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax)
+        ax.set_title(f'Confusion Matrix - {model_name}')
+        ax.set_xlabel('Predicted Label')
+        ax.set_ylabel('True Label')
+        plots['confusion_matrix'] = self._fig_to_base64(fig)
+        
+        # 2. ROC Curve
+        if y_proba is not None:
+            fpr, tpr, _ = roc_curve(y_test, y_proba)
+            roc_auc = auc(fpr, tpr)
+            fig, ax = plt.subplots(figsize=(8, 6))
+            ax.plot(fpr, tpr, label=f'ROC Curve (AUC = {roc_auc:.3f})')
+            ax.plot([0, 1], [0, 1], 'k--', label='Random Classifier')
+            ax.set_xlim([0.0, 1.0])
+            ax.set_ylim([0.0, 1.05])
+            ax.set_xlabel('False Positive Rate')
+            ax.set_ylabel('True Positive Rate')
+            ax.set_title(f'ROC Curve - {model_name}')
+            ax.legend(loc="lower right")
+            plots['roc_curve'] = self._fig_to_base64(fig)
+            
+            # 3. Precision-Recall Curve
+            precision, recall, _ = precision_recall_curve(y_test, y_proba)
+            average_precision = average_precision_score(y_test, y_proba)
+            fig, ax = plt.subplots(figsize=(8, 6))
+            ax.plot(recall, precision, label=f'PR Curve (AP = {average_precision:.3f})')
+            ax.set_xlim([0.0, 1.0])
+            ax.set_ylim([0.0, 1.05])
+            ax.set_xlabel('Recall')
+            ax.set_ylabel('Precision')
+            ax.set_title(f'Precision-Recall Curve - {model_name}')
+            ax.legend(loc="lower left")
+            plots['precision_recall_curve'] = self._fig_to_base64(fig)
+        
+        return plots
+
+    def generate_feature_importance_plots(self, model, X, y, feature_names=None, model_name='Model'):
+        """Generate feature importance and explainability plots"""
+        plots = {}
+        
+        if feature_names is None:
+            feature_names = [f'Feature {i+1}' for i in range(X.shape[1])]
+        
+        # 1. Feature importance for tree-based models
+        if hasattr(model, 'feature_importances_'):
+            importances = model.feature_importances_
+            indices = np.argsort(importances)[::-1]
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.bar(range(X.shape[1]), importances[indices], align='center')
+            ax.set_xticks(range(X.shape[1]))
+            ax.set_xticklabels([feature_names[i] for i in indices], rotation=45)
+            ax.set_title(f'Feature Importance - {model_name}')
+            ax.set_ylabel('Importance')
+            plots['feature_importance'] = self._fig_to_base64(fig)
+        
+        # 2. Permutation importance (works for any model)
+        try:
+            result = permutation_importance(model, X, y, n_repeats=5, random_state=42)
+            sorted_idx = result.importances_mean.argsort()
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.boxplot(result.importances[sorted_idx].T, vert=False, 
+                      labels=np.array(feature_names)[sorted_idx])
+            ax.set_title(f'Permutation Importance - {model_name}')
+            ax.set_xlabel('Importance')
+            plots['permutation_importance'] = self._fig_to_base64(fig)
+        except Exception as e:
+            logger.warning(f"Could not generate permutation importance: {e}")
+        
+        return plots
+
+    def generate_advanced_plots(self, model, X, y, model_name='Model'):
+        """Generate advanced visualization plots"""
+        plots = {}
+        
+        # 1. Learning curves (performance vs training set size)
+        try:
+            train_sizes, train_scores, test_scores = learning_curve(
+                model, X, y, cv=3, n_jobs=-1, 
+                train_sizes=np.linspace(0.1, 1.0, 5)
+            )
+            train_mean = np.mean(train_scores, axis=1)
+            train_std = np.std(train_scores, axis=1)
+            test_mean = np.mean(test_scores, axis=1)
+            test_std = np.std(test_scores, axis=1)
+            
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.plot(train_sizes, train_mean, 'o-', color='blue', label='Training Score')
+            ax.fill_between(train_sizes, train_mean - train_std, train_mean + train_std, 
+                           alpha=0.1, color='blue')
+            ax.plot(train_sizes, test_mean, 'o-', color='red', label='Cross-validation Score')
+            ax.fill_between(train_sizes, test_mean - test_std, test_mean + test_std, 
+                           alpha=0.1, color='red')
+            ax.set_title(f'Learning Curve - {model_name}')
+            ax.set_xlabel('Training Examples')
+            ax.set_ylabel('Score')
+            ax.legend(loc='best')
+            plots['learning_curve'] = self._fig_to_base64(fig)
+        except Exception as e:
+            logger.warning(f"Could not generate learning curve: {e}")
+        
+        # 2. Decision boundary with uncertainty (for 2D data)
+        if X.shape[1] == 2 and hasattr(model, 'predict_proba'):
+            try:
+                x_min, x_max = X[:, 0].min() - 0.1, X[:, 0].max() + 0.1
+                y_min, y_max = X[:, 1].min() - 0.1, X[:, 1].max() + 0.1
+                xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.02),
+                                   np.arange(y_min, y_max, 0.02))
+                grid_points = np.c_[xx.ravel(), yy.ravel()]
+                probs = model.predict_proba(grid_points)[:, 1].reshape(xx.shape)
+                
+                fig, ax = plt.subplots(figsize=(10, 8))
+                contour = ax.contourf(xx, yy, probs, 25, cmap='RdBu', alpha=0.8)
+                plt.colorbar(contour, ax=ax, label='Class Probability')
+                ax.scatter(X[:, 0], X[:, 1], c=y, cmap='RdBu', edgecolors='k')
+                ax.set_title(f'Decision Boundary with Uncertainty - {model_name}')
+                ax.set_xlabel('Feature 1')
+                ax.set_ylabel('Feature 2')
+                plots['decision_uncertainty'] = self._fig_to_base64(fig)
+            except Exception as e:
+                logger.warning(f"Could not generate decision boundary: {e}")
+        
+        return plots
+
     def create_comparison_plot(self, results: Dict) -> str:
-        """Create model comparison plot"""
+        """Create comprehensive model comparison plot"""
         models = ['Classical', 'Quantum', 'Hybrid']
         accuracies = [results['classical']['accuracy'], 
                      results['quantum']['accuracy'], 
@@ -426,14 +645,14 @@ class QuantumClassicalMLSimulator:
                 results['quantum']['training_time'],
                 results['hybrid']['training_time']]
         
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+        # Create a more comprehensive comparison
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
         
         # Accuracy comparison
         bars1 = ax1.bar(models, accuracies, color=['#3b82f6', '#10b981', '#8b5cf6'])
         ax1.set_ylabel('Accuracy')
         ax1.set_title('Model Accuracy Comparison')
         ax1.set_ylim(0, 1)
-        
         for bar, acc in zip(bars1, accuracies):
             ax1.text(bar.get_x() + bar.get_width()/2, acc + 0.01, 
                     f'{acc:.1%}', ha='center', va='bottom')
@@ -442,21 +661,36 @@ class QuantumClassicalMLSimulator:
         bars2 = ax2.bar(models, times, color=['#3b82f6', '#10b981', '#8b5cf6'])
         ax2.set_ylabel('Training Time (seconds)')
         ax2.set_title('Training Time Comparison')
-        
         for bar, time_val in zip(bars2, times):
             ax2.text(bar.get_x() + bar.get_width()/2, time_val + 0.01, 
                     f'{time_val:.2f}s', ha='center', va='bottom')
         
+        # Precision comparison
+        precisions = [results['classical']['precision'], 
+                     results['quantum']['precision'], 
+                     results['hybrid']['precision']]
+        bars3 = ax3.bar(models, precisions, color=['#3b82f6', '#10b981', '#8b5cf6'])
+        ax3.set_ylabel('Precision')
+        ax3.set_title('Model Precision Comparison')
+        ax3.set_ylim(0, 1)
+        for bar, prec in zip(bars3, precisions):
+            ax3.text(bar.get_x() + bar.get_width()/2, prec + 0.01, 
+                    f'{prec:.1%}', ha='center', va='bottom')
+        
+        # F1 Score comparison
+        f1_scores = [results['classical']['f1'], 
+                    results['quantum']['f1'], 
+                    results['hybrid']['f1']]
+        bars4 = ax4.bar(models, f1_scores, color=['#3b82f6', '#10b981', '#8b5cf6'])
+        ax4.set_ylabel('F1 Score')
+        ax4.set_title('Model F1 Score Comparison')
+        ax4.set_ylim(0, 1)
+        for bar, f1 in zip(bars4, f1_scores):
+            ax4.text(bar.get_x() + bar.get_width()/2, f1 + 0.01, 
+                    f'{f1:.1%}', ha='center', va='bottom')
+        
         plt.tight_layout()
-        
-        # Convert to base64
-        img_buffer = io.BytesIO()
-        plt.savefig(img_buffer, format='png', bbox_inches='tight', dpi=150)
-        img_buffer.seek(0)
-        img_str = base64.b64encode(img_buffer.getvalue()).decode()
-        plt.close()
-        
-        return f"data:image/png;base64,{img_str}"
+        return self._fig_to_base64(fig)
 
 # Global simulator instance
 simulator = QuantumClassicalMLSimulator()
@@ -567,20 +801,92 @@ async def run_simulation(request: SimulationRequest):
         hybrid_results['training_time'] = hybrid_time
         results['hybrid'] = hybrid_results
         
-        # Generate plots
-        logger.info("Generating visualizations...")
-        plots = {
-            'classical': simulator.create_decision_boundary_plot(
-                classical_model, X_test, y_test, f"Classical Model ({request.classicalModel})"
-            ),
-            'quantum': simulator.create_decision_boundary_plot(
-                quantum_model, X_test, y_test, f"Quantum Model ({request.quantumModel})"
-            ),
-            'hybrid': simulator.create_decision_boundary_plot(
-                hybrid_model, X_test_hybrid, y_test, f"Hybrid Model"
-            ),
-            'comparison': simulator.create_comparison_plot(results)
-        }
+        # Generate comprehensive visualizations
+        logger.info("Generating comprehensive visualizations...")
+        plots = {}
+        
+        # 1. Data exploration plots
+        exploratory_plots = simulator.generate_exploratory_plots(X, y)
+        for k, v in exploratory_plots.items():
+            plots[f"exploratory_{k}"] = v
+        
+        # 2. Classical model plots
+        classical_eval_plots = simulator.generate_evaluation_plots(
+            classical_model, X_test_scaled, y_test, f"Classical Model ({request.classicalModel})"
+        )
+        classical_importance_plots = simulator.generate_feature_importance_plots(
+            classical_model, X_train_scaled, y_train, 
+            feature_names=[f"Feature {i+1}" for i in range(X_train_scaled.shape[1])],
+            model_name=f"Classical Model ({request.classicalModel})"
+        )
+        classical_advanced_plots = simulator.generate_advanced_plots(
+            classical_model, X_train_scaled, y_train,
+            model_name=f"Classical Model ({request.classicalModel})"
+        )
+        
+        for k, v in classical_eval_plots.items():
+            plots[f"classical_{k}"] = v
+        for k, v in classical_importance_plots.items():
+            plots[f"classical_{k}"] = v
+        for k, v in classical_advanced_plots.items():
+            plots[f"classical_{k}"] = v
+        
+        # 3. Quantum model plots
+        quantum_eval_plots = simulator.generate_evaluation_plots(
+            quantum_model, X_test_scaled, y_test, f"Quantum Model ({request.quantumModel})"
+        )
+        quantum_importance_plots = simulator.generate_feature_importance_plots(
+            quantum_model, X_train_scaled, y_train,
+            feature_names=[f"Feature {i+1}" for i in range(X_train_scaled.shape[1])],
+            model_name=f"Quantum Model ({request.quantumModel})"
+        )
+        quantum_advanced_plots = simulator.generate_advanced_plots(
+            quantum_model, X_train_scaled, y_train,
+            model_name=f"Quantum Model ({request.quantumModel})"
+        )
+        
+        for k, v in quantum_eval_plots.items():
+            plots[f"quantum_{k}"] = v
+        for k, v in quantum_importance_plots.items():
+            plots[f"quantum_{k}"] = v
+        for k, v in quantum_advanced_plots.items():
+            plots[f"quantum_{k}"] = v
+        
+        # 4. Hybrid model plots
+        hybrid_eval_plots = simulator.generate_evaluation_plots(
+            hybrid_model, X_test_scaled, y_test, f"Hybrid Model",
+            is_hybrid=True, quantum_model=quantum_model
+        )
+        hybrid_importance_plots = simulator.generate_feature_importance_plots(
+            hybrid_model, X_test_hybrid, y_train,
+            feature_names=[f"Feature {i+1}" for i in range(X_train_scaled.shape[1])] + ["Quantum Prediction"],
+            model_name=f"Hybrid Model"
+        )
+        hybrid_advanced_plots = simulator.generate_advanced_plots(
+            hybrid_model, X_test_hybrid, y_train,
+            model_name=f"Hybrid Model"
+        )
+        
+        for k, v in hybrid_eval_plots.items():
+            plots[f"hybrid_{k}"] = v
+        for k, v in hybrid_importance_plots.items():
+            plots[f"hybrid_{k}"] = v
+        for k, v in hybrid_advanced_plots.items():
+            plots[f"hybrid_{k}"] = v
+        
+        # 5. Decision boundary plots (original)
+        plots['classical_decision_boundary'] = simulator.create_decision_boundary_plot(
+            classical_model, X_test, y_test, f"Classical Model ({request.classicalModel})"
+        )
+        plots['quantum_decision_boundary'] = simulator.create_decision_boundary_plot(
+            quantum_model, X_test, y_test, f"Quantum Model ({request.quantumModel})"
+        )
+        plots['hybrid_decision_boundary'] = simulator.create_decision_boundary_plot(
+            hybrid_model, X_test_hybrid, y_test, f"Hybrid Model"
+        )
+        
+        # 6. Comprehensive comparison
+        plots['comparison'] = simulator.create_comparison_plot(results)
         
         dataset_info = {
             'type': request.datasetType,
