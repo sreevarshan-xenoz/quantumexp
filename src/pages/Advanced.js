@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import HyperparameterOptimizer from '../components/HyperparameterOptimizer';
 import OptimizationResults from '../components/OptimizationResults';
 import QuantumHardwareManager from '../components/QuantumHardwareManager';
+import AdvancedQuantumAlgorithms from '../components/AdvancedQuantumAlgorithms';
+import HybridOptimization from '../components/HybridOptimization';
 import { optimizeHyperparameters } from '../api/simulation';
 
 const Advanced = () => {
@@ -43,22 +45,22 @@ const Advanced = () => {
       status: 'Available'
     },
     {
-      icon: '🧠',
-      title: 'Neural Architecture Search',
-      description: 'Automated quantum circuit architecture optimization',
-      status: 'Coming Soon'
+      icon: '🔬',
+      title: 'Advanced Quantum Algorithms',
+      description: 'QAOA, VQE, QNN, QFT, and QPE for cutting-edge quantum computing',
+      status: 'Available'
+    },
+    {
+      icon: '🔄',
+      title: 'Hybrid Optimization',
+      description: 'Quantum-classical hybrid optimization with parameter shift and Bayesian methods',
+      status: 'Available'
     },
     {
       icon: '📊',
       title: 'Multi-Objective Optimization',
-      description: 'Optimize for multiple metrics simultaneously (accuracy, speed, complexity)',
-      status: 'Coming Soon'
-    },
-    {
-      icon: '⚡',
-      title: 'Real-time Optimization',
-      description: 'Live parameter adjustment with immediate feedback',
-      status: 'Coming Soon'
+      description: 'Pareto-optimal solutions for multiple objectives simultaneously',
+      status: 'Available'
     }
   ];
 
@@ -115,6 +117,16 @@ const Advanced = () => {
         {/* Quantum Hardware Integration Section */}
         <div className="mb-12">
           <QuantumHardwareManager />
+        </div>
+
+        {/* Advanced Quantum Algorithms Section */}
+        <div className="mb-12">
+          <AdvancedQuantumAlgorithms />
+        </div>
+
+        {/* Hybrid Optimization Section */}
+        <div className="mb-12">
+          <HybridOptimization />
         </div>
 
         {/* Advanced Analytics Preview */}
