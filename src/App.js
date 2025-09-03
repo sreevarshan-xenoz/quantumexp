@@ -5,6 +5,7 @@ import Header from './components/Header';
 import Simulation from './pages/Simulation';
 import Results from './pages/Results';
 import About from './pages/About';
+import Advanced from './pages/Advanced';
 import './index.css';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Simulation />} />
               <Route path="/results" element={<Results />} />
+              <Route path="/advanced" element={<Advanced />} />
               <Route path="/about" element={<About />} />
             </Routes>
           </main>
