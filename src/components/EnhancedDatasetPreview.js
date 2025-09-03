@@ -312,10 +312,10 @@ const EnhancedDatasetPreview = ({ onDatasetSelect }) => {
               <nav className="-mb-px flex space-x-8">
                 {[
                   { id: 'overview', label: 'Overview' },
-                  { id: 'distributions', label: 'Distributions' },
+                  { id: 'feature_distributions', label: 'Distributions' },
                   { id: 'class_distribution', label: 'Classes' },
-                  { id: 'correlation', label: 'Correlation' },
-                  { id: 'complexity', label: 'Complexity' }
+                  { id: 'correlation_matrix', label: 'Correlation' },
+                  { id: 'complexity_metrics', label: 'Complexity' }
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -335,10 +335,10 @@ const EnhancedDatasetPreview = ({ onDatasetSelect }) => {
             {/* Tab Content */}
             <div className="tab-content">
               {activeTab === 'overview' && renderOverview()}
-              {activeTab === 'distributions' && renderImagePlot(plots.feature_distributions, 'Feature Distributions')}
+              {activeTab === 'feature_distributions' && renderImagePlot(plots.feature_distributions, 'Feature Distributions')}
               {activeTab === 'class_distribution' && renderImagePlot(plots.class_distribution, 'Class Distribution')}
-              {activeTab === 'correlation' && renderImagePlot(plots.correlation_matrix, 'Feature Correlation Matrix')}
-              {activeTab === 'complexity' && renderImagePlot(plots.complexity_metrics, 'Dataset Complexity Metrics')}
+              {activeTab === 'correlation_matrix' && renderImagePlot(plots.correlation_matrix, 'Feature Correlation Matrix')}
+              {activeTab === 'complexity_metrics' && renderImagePlot(plots.complexity_metrics, 'Dataset Complexity Metrics')}
             </div>
           </CardContent>
         </Card>

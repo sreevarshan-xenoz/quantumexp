@@ -258,17 +258,7 @@ const Simulation = () => {
               />
             </div>
 
-            {/* Enhanced Dataset Visualization */}
-            <div className="animate-slide-up">
-              <DatasetVisualizer
-                data={datasetPreview?.data}
-                datasetType={datasetType}
-                isLoading={isLoadingPreview}
-                datasetInfo={selectedDatasetFromPreview?.datasetInfo}
-                showEnhancedView={showDatasetPreview}
-                onToggleEnhancedView={() => setShowDatasetPreview(!showDatasetPreview)}
-              />
-            </div>
+
 
             <div className="card animate-slide-up">
               <h2 className="text-xl font-semibold mb-6 flex items-center">

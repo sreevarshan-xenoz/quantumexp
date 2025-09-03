@@ -62,21 +62,27 @@ class EnhancedDatasetManager:
         description = "Two interleaving half circles dataset with adjustable noise."
         return X, y, feature_names, description
 
-    def _generate_blobs(self, n_samples=1000, centers=3, cluster_std=1.0):
+    def _generate_blobs(self, n_samples=1000, noise=0.1, centers=3, cluster_std=1.0):
         """Generate isotropic Gaussian blobs"""
         X, y = make_blobs(n_samples=n_samples, centers=centers, cluster_std=cluster_std, random_state=42)
         # Convert to binary classification
         y = (y >= centers // 2).astype(int)
+        # Add noise if requested
+        if noise > 0:
+            X += noise * np.random.randn(*X.shape)
         feature_names = [f'Feature_{i+1}' for i in range(X.shape[1])]
         description = f"Isotropic Gaussian blobs with {centers} centers and adjustable cluster standard deviation."
         return X, y, feature_names, description
 
-    def _generate_classification(self, n_samples=1000, n_features=2, n_informative=2, n_redundant=0):
+    def _generate_classification(self, n_samples=1000, noise=0.1, n_features=2, n_informative=2, n_redundant=0):
         """Generate a random n-class classification problem"""
         X, y = make_classification(
             n_samples=n_samples, n_features=n_features, n_informative=n_informative, 
             n_redundant=n_redundant, n_classes=2, random_state=42
         )
+        # Add noise if requested
+        if noise > 0:
+            X += noise * np.random.randn(*X.shape)
         feature_names = [f'Feature_{i+1}' for i in range(X.shape[1])]
         description = f"Random classification problem with {n_features} features, {n_informative} informative."
         return X, y, feature_names, description
@@ -89,6 +95,9 @@ class EnhancedDatasetManager:
         X = np.hstack((d1x, d1y))
         y = np.zeros(n_samples)
         y[n_samples // 2:] = 1
+        # Add additional noise if requested
+        if noise > 0:
+            X += noise * np.random.randn(*X.shape)
         feature_names = [f'Feature_{i+1}' for i in range(X.shape[1])]
         description = "Spiral dataset with adjustable noise."
         return X, y, feature_names, description
@@ -225,7 +234,7 @@ class EnhancedDatasetManager:
             'n_samples': int(X.shape[0]),
             'n_features': int(X.shape[1]),
             'n_classes': int(len(np.unique(y))),
-            'class_distribution': (np.bincount(y) / len(y)).tolist(),
+            'class_distribution': (np.bincount(y.astype(int)) / len(y)).tolist(),
             'missing_values': int(np.isnan(X).sum()) if X.dtype.kind in 'fc' else 0,
             'feature_types': self._infer_feature_types(X),
             'dataset_complexity': self._calculate_complexity(X, y)
@@ -238,8 +247,16 @@ class EnhancedDatasetManager:
         feature_types = []
         for i in range(X.shape[1]):
             unique_vals = np.unique(X[:, i])
-            if len(unique_vals) < 10 and np.all(unique_vals.astype(int) == unique_vals):
-                feature_types.append('categorical')
+            # Check if values are categorical (few unique values and can be treated as integers)
+            if len(unique_vals) < 10:
+                try:
+                    # Try to convert to integer and check if it's categorical
+                    if np.allclose(unique_vals, unique_vals.astype(int)):
+                        feature_types.append('categorical')
+                    else:
+                        feature_types.append('numerical')
+                except:
+                    feature_types.append('numerical')
             else:
                 feature_types.append('numerical')
         return feature_types
@@ -369,7 +386,7 @@ class EnhancedDatasetManager:
         
         # 1. Class distribution
         fig, ax = plt.subplots(figsize=(8, 6))
-        class_counts = np.bincount(self.y)
+        class_counts = np.bincount(self.y.astype(int))
         colors = ['skyblue', 'salmon']
         bars = ax.bar(range(len(class_counts)), class_counts, color=colors[:len(class_counts)])
         ax.set_title('Class Distribution', fontsize=14, fontweight='bold')

@@ -161,32 +161,41 @@ class QuantumClassicalMLSimulator:
         self.dataset_manager = EnhancedDatasetManager() if EnhancedDatasetManager else None
         
     def generate_dataset(self, dataset_type: str, n_samples: int, noise: float) -> tuple:
-        """Generate synthetic dataset"""
-        if dataset_type == 'circles':
-            X, y = make_circles(
-                n_samples=n_samples, 
-                noise=noise, 
-                factor=0.2, 
-                random_state=self.random_state
-            )
-        elif dataset_type == 'moons':
-            X, y = make_moons(
-                n_samples=n_samples, 
-                noise=noise, 
-                random_state=self.random_state
-            )
-        elif dataset_type == 'blobs':
-            X, y = make_blobs(
-                n_samples=n_samples, 
-                centers=2, 
-                n_features=2, 
-                cluster_std=noise*2, 
-                random_state=self.random_state
-            )
+        """Generate dataset using EnhancedDatasetManager if available, fallback to basic datasets"""
+        if self.dataset_manager:
+            # Use EnhancedDatasetManager for all dataset types
+            if dataset_type in self.dataset_manager.datasets:
+                X, y, _, _ = self.dataset_manager.datasets[dataset_type](n_samples=n_samples, noise=noise)
+                return X, y
+            else:
+                raise ValueError(f"Unknown dataset type: {dataset_type}")
         else:
-            raise ValueError(f"Unknown dataset type: {dataset_type}")
-            
-        return X, y
+            # Fallback to basic datasets if EnhancedDatasetManager is not available
+            if dataset_type == 'circles':
+                X, y = make_circles(
+                    n_samples=n_samples, 
+                    noise=noise, 
+                    factor=0.2, 
+                    random_state=self.random_state
+                )
+            elif dataset_type == 'moons':
+                X, y = make_moons(
+                    n_samples=n_samples, 
+                    noise=noise, 
+                    random_state=self.random_state
+                )
+            elif dataset_type == 'blobs':
+                X, y = make_blobs(
+                    n_samples=n_samples, 
+                    centers=2, 
+                    n_features=2, 
+                    cluster_std=noise*2, 
+                    random_state=self.random_state
+                )
+            else:
+                raise ValueError(f"Unknown dataset type: {dataset_type}")
+                
+            return X, y
     
     def get_classical_model(self, model_type: str):
         """Get classical ML model"""
@@ -1000,8 +1009,8 @@ async def enhanced_dataset_preview(request: dict):
                 "n_features": metadata['n_features']
             },
             "plots": plots,
-            "data": X[:100].tolist() if X.shape[1] <= 2 else [],  # Only return data for 2D visualization
-            "labels": y[:100].tolist() if X.shape[1] <= 2 else []
+            "data": X[:100].tolist(),  # Always return sample data
+            "labels": y[:100].tolist()  # Always return sample labels
         }
         
     except Exception as e:
