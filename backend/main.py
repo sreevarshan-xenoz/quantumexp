@@ -18,6 +18,13 @@ from pydantic import BaseModel
 
 # Scikit-learn imports
 from sklearn.datasets import make_circles, make_moons, make_blobs, make_classification
+
+# Enhanced dataset manager
+try:
+    from dataset_manager import EnhancedDatasetManager
+except ImportError as e:
+    logger.warning(f"Could not import EnhancedDatasetManager: {e}")
+    EnhancedDatasetManager = None
 from sklearn.model_selection import train_test_split, learning_curve
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_score, confusion_matrix,
@@ -149,6 +156,7 @@ class QuantumClassicalMLSimulator:
     def __init__(self, random_state: int = 42):
         self.random_state = random_state
         self.scaler = MinMaxScaler((0, 2 * np.pi))
+        self.dataset_manager = EnhancedDatasetManager() if EnhancedDatasetManager else None
         
     def generate_dataset(self, dataset_type: str, n_samples: int, noise: float) -> tuple:
         """Generate synthetic dataset"""
@@ -951,6 +959,52 @@ async def generate_dataset_preview(request: DatasetRequest):
     except Exception as e:
         logger.error(f"Dataset generation error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Dataset generation failed: {str(e)}")
+
+@app.post("/enhanced_dataset_preview")
+async def enhanced_dataset_preview(request: dict):
+    """Generate enhanced dataset preview with comprehensive analysis"""
+    try:
+        if not simulator.dataset_manager:
+            raise HTTPException(status_code=501, detail="Enhanced dataset manager not available. Please install required dependencies.")
+        
+        dataset_name = request.get('datasetName', 'iris_binary')
+        n_samples = request.get('nSamples', 1000)
+        noise = request.get('noiseLevel', 0.1)
+        feature_engineering = request.get('featureEngineering')
+        handle_imbalance = request.get('handleImbalance')
+        
+        # Load dataset
+        X, y, feature_names, description = simulator.dataset_manager.load_dataset(
+            dataset_name, n_samples=n_samples, noise=noise
+        )
+        
+        # Apply feature engineering if specified
+        if feature_engineering:
+            simulator.dataset_manager.feature_engineering(method=feature_engineering)
+        
+        # Generate visualizations
+        plots = simulator.dataset_manager.generate_visualizations()
+        
+        # Get dataset metadata
+        metadata = simulator.dataset_manager.metadata
+        
+        return {
+            "dataset_info": {
+                "name": dataset_name,
+                "description": description,
+                "metadata": metadata,
+                "feature_names": feature_names,
+                "n_samples": metadata['n_samples'],
+                "n_features": metadata['n_features']
+            },
+            "plots": plots,
+            "data": X[:100].tolist() if X.shape[1] <= 2 else [],  # Only return data for 2D visualization
+            "labels": y[:100].tolist() if X.shape[1] <= 2 else []
+        }
+        
+    except Exception as e:
+        logger.error(f"Enhanced dataset preview error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Enhanced dataset preview failed: {str(e)}")
 
 @app.post("/run_simulation", response_model=SimulationResponse)
 async def run_simulation(request: SimulationRequest):
