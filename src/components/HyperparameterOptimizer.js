@@ -264,7 +264,7 @@ const HyperparameterOptimizer = ({ onOptimize, isOptimizing = false }) => {
         <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-4">
           Parameter Ranges
         </h4>
-        
+
         <div className="space-y-6">
           {/* Classical Parameters */}
           {optimizationConfig.optimize_classical && (
@@ -313,11 +313,10 @@ const HyperparameterOptimizer = ({ onOptimize, isOptimizing = false }) => {
         <button
           onClick={handleOptimizationStart}
           disabled={isOptimizing}
-          className={`px-8 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${
-            isOptimizing
+          className={`px-8 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${isOptimizing
               ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
-          }`}
+            }`}
         >
           {isOptimizing ? (
             <div className="flex items-center space-x-2">

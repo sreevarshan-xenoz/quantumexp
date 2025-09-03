@@ -7,6 +7,9 @@ import ParameterSlider from '../components/ParameterSlider';
 import ProgressIndicator from '../components/ProgressIndicator';
 import SimulationVisualizationTabs from '../components/SimulationVisualizationTabs';
 import HyperparameterOptimizer from '../components/HyperparameterOptimizer';
+import EnhancedDatasetPreview from '../components/EnhancedDatasetPreview';
+import DatasetComparison from '../components/DatasetComparison';
+import DatasetSelector from '../components/DatasetSelector';
 import { runSimulation, generateDatasetPreview, optimizeHyperparameters } from '../api/simulation';
 
 const Simulation = () => {
@@ -18,6 +21,34 @@ const Simulation = () => {
   const [sampleSize, setSampleSize] = useState(1000);
   const [quantumFramework, setQuantumFramework] = useState('qiskit');
   const [quantumModel, setQuantumModel] = useState('vqc');
+  
+  // Enhanced dataset preview state
+  const [showDatasetPreview, setShowDatasetPreview] = useState(true);
+  const [showDatasetComparison, setShowDatasetComparison] = useState(false);
+  const [previewDatasets, setPreviewDatasets] = useState({});
+  const [selectedDatasetFromPreview, setSelectedDatasetFromPreview] = useState(null);
+  const [datasetConfig, setDatasetConfig] = useState({
+    datasetName: 'iris_binary',
+    nSamples: 1000,
+    noiseLevel: 0.1,
+    featureEngineering: null,
+    handleImbalance: null
+  });
+
+  // Handle dataset selection from preview
+  const handleDatasetFromPreview = (datasetSelection) => {
+    setSelectedDatasetFromPreview(datasetSelection);
+    setDatasetConfig(datasetSelection);
+    if (datasetSelection.datasetName) {
+      setDatasetType(datasetSelection.datasetName);
+    }
+    if (datasetSelection.nSamples) {
+      setSampleSize(datasetSelection.nSamples);
+    }
+    if (datasetSelection.noiseLevel !== undefined) {
+      setNoiseLevel(datasetSelection.noiseLevel);
+    }
+  };
   const [classicalModel, setClassicalModel] = useState('logistic');
   const [featureMap, setFeatureMap] = useState('zz');
   
@@ -69,9 +100,11 @@ const Simulation = () => {
 
     try {
       const results = await runSimulation({
-        datasetType,
-        noiseLevel,
-        sampleSize,
+        datasetType: datasetConfig.datasetName || datasetType,
+        noiseLevel: datasetConfig.noiseLevel || noiseLevel,
+        sampleSize: datasetConfig.nSamples || sampleSize,
+        featureEngineering: datasetConfig.featureEngineering,
+        handleImbalance: datasetConfig.handleImbalance,
         quantumFramework,
         quantumModel,
         classicalModel,
@@ -112,9 +145,11 @@ const Simulation = () => {
     
     try {
       const results = await optimizeHyperparameters({
-        datasetType,
-        noiseLevel,
-        sampleSize,
+        datasetType: datasetConfig.datasetName || datasetType,
+        noiseLevel: datasetConfig.noiseLevel || noiseLevel,
+        sampleSize: datasetConfig.nSamples || sampleSize,
+        featureEngineering: datasetConfig.featureEngineering,
+        handleImbalance: datasetConfig.handleImbalance,
         quantumFramework,
         quantumModel,
         classicalModel,
@@ -157,56 +192,82 @@ const Simulation = () => {
           </p>
         </div>
 
+        {/* Enhanced Dataset Preview Section */}
+        {showDatasetPreview && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                Dataset Explorer
+              </h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowDatasetComparison(!showDatasetComparison)}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  {showDatasetComparison ? 'Hide Comparison' : 'Compare Datasets'}
+                </button>
+                <button
+                  onClick={() => setShowDatasetPreview(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Hide Preview
+                </button>
+              </div>
+            </div>
+            
+            <EnhancedDatasetPreview
+              onDatasetSelect={handleDatasetFromPreview}
+            />
+            
+            {showDatasetComparison && (
+              <div className="mt-6">
+                <DatasetComparison
+                  datasets={previewDatasets}
+                  onDatasetSelect={(dataset, name) => {
+                    setSelectedDatasetFromPreview(dataset);
+                    setDatasetType(name);
+                    if (dataset && dataset.X) {
+                      setSampleSize(dataset.X.length);
+                    }
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Show Dataset Preview Button when hidden */}
+        {!showDatasetPreview && (
+          <div className="mb-8 text-center">
+            <button
+              onClick={() => setShowDatasetPreview(true)}
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all shadow-lg"
+            >
+              🔍 Show Enhanced Dataset Preview
+            </button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Panel - Controls */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="card animate-slide-up">
-              <h2 className="text-xl font-semibold mb-6 flex items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                Dataset Configuration
-              </h2>
-              
-              <div className="space-y-6">
-                <div>
-                  <h3 className="font-medium mb-3 text-gray-700 dark:text-gray-300">Dataset Type</h3>
-                  <div className="grid grid-cols-1 gap-2">
-                    {datasetOptions.map(option => (
-                      <button
-                        key={option.id}
-                        className={`p-3 rounded-lg text-left transition-all duration-200 ${
-                          datasetType === option.id 
-                            ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' 
-                            : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
-                        }`}
-                        onClick={() => setDatasetType(option.id)}
-                      >
-                        <div className="font-medium">{option.name}</div>
-                        <div className={`text-sm ${datasetType === option.id ? 'text-purple-100' : 'text-gray-500 dark:text-gray-400'}`}>
-                          {option.description}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            <div className="animate-slide-up">
+              <DatasetSelector
+                onDatasetChange={handleDatasetFromPreview}
+                initialDataset={datasetConfig.datasetName}
+              />
+            </div>
 
-                <ParameterSlider 
-                  label="Noise Level"
-                  value={noiseLevel}
-                  min={0}
-                  max={0.5}
-                  step={0.05}
-                  onChange={setNoiseLevel}
-                />
-
-                <ParameterSlider 
-                  label="Sample Size"
-                  value={sampleSize}
-                  min={100}
-                  max={2000}
-                  step={100}
-                  onChange={setSampleSize}
-                />
-              </div>
+            {/* Enhanced Dataset Visualization */}
+            <div className="animate-slide-up">
+              <DatasetVisualizer
+                data={datasetPreview?.data}
+                datasetType={datasetType}
+                isLoading={isLoadingPreview}
+                datasetInfo={selectedDatasetFromPreview?.datasetInfo}
+                showEnhancedView={showDatasetPreview}
+                onToggleEnhancedView={() => setShowDatasetPreview(!showDatasetPreview)}
+              />
             </div>
 
             <div className="card animate-slide-up">

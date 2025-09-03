@@ -3,7 +3,7 @@ import React from 'react';
 const OptimizationResults = ({ results, onClose }) => {
   if (!results || !results.optimization_results) return null;
 
-  const { optimization_results, dataset_info, optimization_config } = results;
+  const { optimization_results, dataset_info = {}, optimization_config = {} } = results;
 
   const ModelOptimizationCard = ({ modelType, modelName, result, color }) => {
     if (result.error) {
@@ -103,7 +103,7 @@ const OptimizationResults = ({ results, onClose }) => {
               🚀 Hyperparameter Optimization Results
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Optimized using {optimization_config.method.replace('_', ' ')} with {optimization_config.cv_folds}-fold CV
+              Optimized using {optimization_config?.method?.replace('_', ' ') || 'unknown method'} with {optimization_config?.cv_folds || 'N/A'}-fold CV
             </p>
           </div>
           <button
@@ -122,25 +122,25 @@ const OptimizationResults = ({ results, onClose }) => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {optimization_config.method.replace('_', ' ').toUpperCase()}
+                {optimization_config?.method?.replace('_', ' ').toUpperCase() || 'N/A'}
               </div>
               <div className="text-sm text-blue-500 dark:text-blue-300">Optimization Method</div>
             </div>
             <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {dataset_info.samples.toLocaleString()}
+                {dataset_info?.samples?.toLocaleString() || 'N/A'}
               </div>
               <div className="text-sm text-green-500 dark:text-green-300">Total Samples</div>
             </div>
             <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                {optimization_config.cv_folds}
+                {optimization_config?.cv_folds || 'N/A'}
               </div>
               <div className="text-sm text-purple-500 dark:text-purple-300">CV Folds</div>
             </div>
             <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                {optimization_config.scoring.toUpperCase()}
+                {optimization_config?.scoring?.toUpperCase() || 'N/A'}
               </div>
               <div className="text-sm text-orange-500 dark:text-orange-300">Scoring Metric</div>
             </div>
@@ -196,19 +196,19 @@ const OptimizationResults = ({ results, onClose }) => {
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div className="text-center">
                 <div className="font-semibold text-blue-600 dark:text-blue-400">
-                  {dataset_info.train_size}
+                  {dataset_info?.train_size || 'N/A'}
                 </div>
                 <div className="text-gray-600 dark:text-gray-400">Training</div>
               </div>
               <div className="text-center">
                 <div className="font-semibold text-green-600 dark:text-green-400">
-                  {dataset_info.val_size}
+                  {dataset_info?.val_size || 'N/A'}
                 </div>
                 <div className="text-gray-600 dark:text-gray-400">Validation</div>
               </div>
               <div className="text-center">
                 <div className="font-semibold text-purple-600 dark:text-purple-400">
-                  {dataset_info.test_size}
+                  {dataset_info?.test_size || 'N/A'}
                 </div>
                 <div className="text-gray-600 dark:text-gray-400">Test</div>
               </div>
@@ -239,10 +239,10 @@ const OptimizationResults = ({ results, onClose }) => {
               <div>
                 <h5 className="font-medium text-purple-800 dark:text-purple-200 mb-2">Key Findings</h5>
                 <ul className="text-purple-700 dark:text-purple-300 space-y-1">
-                  <li>• Optimization method: {optimization_config.method.replace('_', ' ')}</li>
-                  <li>• Cross-validation: {optimization_config.cv_folds} folds</li>
-                  <li>• Scoring metric: {optimization_config.scoring}</li>
-                  <li>• Dataset: {dataset_info.type} ({dataset_info.samples} samples)</li>
+                  <li>• Optimization method: {optimization_config?.method?.replace('_', ' ') || 'N/A'}</li>
+                  <li>• Cross-validation: {optimization_config?.cv_folds || 'N/A'} folds</li>
+                  <li>• Scoring metric: {optimization_config?.scoring || 'N/A'}</li>
+                  <li>• Dataset: {dataset_info?.type || 'N/A'} ({dataset_info?.samples || 'N/A'} samples)</li>
                 </ul>
               </div>
             </div>
