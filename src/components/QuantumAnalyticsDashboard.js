@@ -113,7 +113,7 @@ const QuantumAnalyticsDashboard = ({ quantumData, hardwareData }) => {
       '7d': 7 * 24 * 60 * 60 * 1000
     };
 
-    const filteredData = realTimeData.filter(d => 
+    const filteredData = realTimeData.filter(d =>
       now - d.timestamp <= timeRangeMs[timeRange]
     );
 
@@ -215,7 +215,7 @@ const QuantumAnalyticsDashboard = ({ quantumData, hardwareData }) => {
           </div>
           <div className="text-sm text-indigo-600">layers</div>
         </div>
-        
+
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg">
           <h4 className="font-semibold text-emerald-800 mb-2">Quantum Volume</h4>
           <div className="text-2xl font-bold text-emerald-600">
@@ -243,7 +243,7 @@ const QuantumAnalyticsDashboard = ({ quantumData, hardwareData }) => {
             </div>
             <div className="flex-1">
               <div className="w-full bg-purple-200 rounded-full h-3">
-                <div 
+                <div
                   className="bg-purple-600 h-3 rounded-full transition-all duration-500"
                   style={{ width: `${quantumAdvantage * 100}%` }}
                 ></div>
@@ -290,11 +290,10 @@ const QuantumAnalyticsDashboard = ({ quantumData, hardwareData }) => {
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
-                className={`px-3 py-1 rounded-md text-sm ${
-                  timeRange === range
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`px-3 py-1 rounded-md text-sm ${timeRange === range
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 {range}
               </button>

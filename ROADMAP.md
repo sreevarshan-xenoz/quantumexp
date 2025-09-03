@@ -99,6 +99,7 @@
 ### 3. **Quantum Generative Models** 🎨
 - [ ] Quantum Generative Adversarial Networks (QGANs)
 - [ ] Quantum Variational Autoencoders (QVAEs)
+
 - [ ] Quantum Boltzmann Machines (QBMs)
 - [ ] Quantum data augmentation techniques
 - [ ] Synthetic quantum dataset generation
