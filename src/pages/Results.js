@@ -80,7 +80,21 @@ const Results = () => {
   );
 
   const ComparisonChart = () => {
-    const maxAccuracy = Math.max(...modelTypes.map(type => results[type].accuracy));
+    // Filter out model types that don't have results
+    const availableModelTypes = modelTypes.filter(type => results[type] && results[type].accuracy !== undefined);
+    
+    if (availableModelTypes.length === 0) {
+      return (
+        <div className="card animate-slide-up">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-6">
+            Model Comparison
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">No results available for comparison.</p>
+        </div>
+      );
+    }
+    
+    const maxAccuracy = Math.max(...availableModelTypes.map(type => results[type].accuracy));
     
     return (
       <div className="card animate-slide-up">
@@ -89,7 +103,7 @@ const Results = () => {
         </h3>
         
         <div className="space-y-4">
-          {modelTypes.map(modelType => {
+          {availableModelTypes.map(modelType => {
             const accuracy = results[modelType].accuracy;
             const percentage = (accuracy / maxAccuracy) * 100;
             
@@ -117,40 +131,53 @@ const Results = () => {
     );
   };
 
-  const ParameterSummary = () => (
-    <div className="card animate-slide-up">
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-        Simulation Parameters
-      </h3>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <span className="text-sm text-gray-600 dark:text-gray-400">Dataset</span>
-          <div className="font-medium text-gray-800 dark:text-gray-200 capitalize">
-            {parameters.datasetType}
-          </div>
+  const ParameterSummary = () => {
+    if (!parameters) {
+      return (
+        <div className="card animate-slide-up">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+            Simulation Parameters
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">No parameter information available.</p>
         </div>
-        <div>
-          <span className="text-sm text-gray-600 dark:text-gray-400">Sample Size</span>
-          <div className="font-medium text-gray-800 dark:text-gray-200">
-            {parameters.sampleSize.toLocaleString()}
+      );
+    }
+
+    return (
+      <div className="card animate-slide-up">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          Simulation Parameters
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Dataset</span>
+            <div className="font-medium text-gray-800 dark:text-gray-200 capitalize">
+              {parameters.datasetType || 'N/A'}
+            </div>
           </div>
-        </div>
-        <div>
-          <span className="text-sm text-gray-600 dark:text-gray-400">Noise Level</span>
-          <div className="font-medium text-gray-800 dark:text-gray-200">
-            {parameters.noiseLevel}
+          <div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Sample Size</span>
+            <div className="font-medium text-gray-800 dark:text-gray-200">
+              {parameters.sampleSize ? parameters.sampleSize.toLocaleString() : 'N/A'}
+            </div>
           </div>
-        </div>
-        <div>
-          <span className="text-sm text-gray-600 dark:text-gray-400">Feature Map</span>
-          <div className="font-medium text-gray-800 dark:text-gray-200 uppercase">
-            {parameters.featureMap}
+          <div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Noise Level</span>
+            <div className="font-medium text-gray-800 dark:text-gray-200">
+              {parameters.noiseLevel !== undefined ? parameters.noiseLevel : 'N/A'}
+            </div>
+          </div>
+          <div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Feature Map</span>
+            <div className="font-medium text-gray-800 dark:text-gray-200 uppercase">
+              {parameters.featureMap || 'N/A'}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
@@ -167,7 +194,7 @@ const Results = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-2">
             <div className="space-y-6">
-              {modelTypes.map(modelType => (
+              {modelTypes.filter(modelType => results[modelType] && results[modelType].accuracy !== undefined).map(modelType => (
                 <ModelResultCard 
                   key={modelType}
                   modelType={modelType}
@@ -196,9 +223,14 @@ const Results = () => {
                 Best Accuracy
               </div>
               <div className="text-sm text-blue-600 dark:text-blue-400">
-                {modelNames[modelTypes.reduce((best, current) => 
-                  results[current].accuracy > results[best].accuracy ? current : best
-                )]}
+                {(() => {
+                  const availableTypes = modelTypes.filter(type => results[type] && results[type].accuracy !== undefined);
+                  if (availableTypes.length === 0) return 'N/A';
+                  const best = availableTypes.reduce((best, current) => 
+                    results[current].accuracy > results[best].accuracy ? current : best
+                  );
+                  return modelNames[best];
+                })()}
               </div>
             </div>
             
@@ -208,9 +240,14 @@ const Results = () => {
                 Fastest Training
               </div>
               <div className="text-sm text-green-600 dark:text-green-400">
-                {modelNames[modelTypes.reduce((fastest, current) => 
-                  results[current].training_time < results[fastest].training_time ? current : fastest
-                )]}
+                {(() => {
+                  const availableTypes = modelTypes.filter(type => results[type] && results[type].training_time !== undefined);
+                  if (availableTypes.length === 0) return 'N/A';
+                  const fastest = availableTypes.reduce((fastest, current) => 
+                    results[current].training_time < results[fastest].training_time ? current : fastest
+                  );
+                  return modelNames[fastest];
+                })()}
               </div>
             </div>
             
@@ -220,9 +257,14 @@ const Results = () => {
                 Best F1 Score
               </div>
               <div className="text-sm text-purple-600 dark:text-purple-400">
-                {modelNames[modelTypes.reduce((best, current) => 
-                  results[current].f1 > results[best].f1 ? current : best
-                )]}
+                {(() => {
+                  const availableTypes = modelTypes.filter(type => results[type] && results[type].f1 !== undefined);
+                  if (availableTypes.length === 0) return 'N/A';
+                  const best = availableTypes.reduce((best, current) => 
+                    results[current].f1 > results[best].f1 ? current : best
+                  );
+                  return modelNames[best];
+                })()}
               </div>
             </div>
           </div>
