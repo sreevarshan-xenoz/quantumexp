@@ -21,13 +21,14 @@ from sklearn.datasets import make_circles, make_moons, make_blobs, make_classifi
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression, RidgeClassifier, SGDClassifier, Perceptron
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier, ExtraTreesClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.naive_bayes import GaussianNB
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis, LinearDiscriminantAnalysis
 
 # XGBoost
 try:
@@ -128,17 +129,35 @@ class QuantumClassicalMLSimulator:
     def get_classical_model(self, model_type: str):
         """Get classical ML model"""
         models = {
+            # Classification models
             'logistic': LogisticRegression(max_iter=1000, random_state=self.random_state),
             'random_forest': RandomForestClassifier(n_estimators=100, random_state=self.random_state),
             'svm': SVC(kernel='rbf', random_state=self.random_state),
             'knn': KNeighborsClassifier(n_neighbors=5),
             'mlp': MLPClassifier(hidden_layer_sizes=(50,), max_iter=1000, random_state=self.random_state),
             'decision_tree': DecisionTreeClassifier(random_state=self.random_state),
-            'naive_bayes': GaussianNB()
+            'naive_bayes': GaussianNB(),
+            
+            # Ensemble methods
+            'gradient_boosting': GradientBoostingClassifier(random_state=self.random_state),
+            'ada_boost': AdaBoostClassifier(random_state=self.random_state),
+            'extra_trees': ExtraTreesClassifier(random_state=self.random_state),
+            
+            # Linear models
+            'ridge': RidgeClassifier(random_state=self.random_state),
+            'sgd': SGDClassifier(random_state=self.random_state),
+            'perceptron': Perceptron(random_state=self.random_state),
+            
+            # Other algorithms
+            'quadratic_discriminant': QuadraticDiscriminantAnalysis(),
+            'linear_discriminant': LinearDiscriminantAnalysis(),
         }
         
-        if XGBOOST_AVAILABLE and model_type == 'xgboost':
-            models['xgboost'] = xgb.XGBClassifier(random_state=self.random_state)
+        if XGBOOST_AVAILABLE:
+            models.update({
+                'xgboost': xgb.XGBClassifier(random_state=self.random_state),
+                'xgb_rf': xgb.XGBRFClassifier(random_state=self.random_state),
+            })
             
         if model_type not in models:
             raise ValueError(f"Unknown classical model: {model_type}")
@@ -167,6 +186,19 @@ class QuantumClassicalMLSimulator:
                 reps=2,
                 paulis=['Z', 'XX']
             )
+        elif feature_map_type == 'pauli_full':
+            return PauliFeatureMap(
+                feature_dimension=feature_dimension,
+                reps=2,
+                paulis=['X', 'Y', 'Z', 'XX', 'YY', 'ZZ']
+            )
+        elif feature_map_type == 'second_order':
+            return PauliFeatureMap(
+                feature_dimension=feature_dimension,
+                reps=1,
+                paulis=['Z', 'ZZ'],
+                entanglement='full'
+            )
         else:
             raise ValueError(f"Unknown feature map: {feature_map_type}")
     
@@ -193,7 +225,7 @@ class QuantumClassicalMLSimulator:
         """Train quantum model"""
         if not QISKIT_AVAILABLE:
             # Return mock quantum model for demo
-            return self._create_mock_quantum_model(), 2.5 + np.random.random()
+            return self._create_mock_quantum_model(model_type), 2.5 + np.random.random()
             
         start_time = time.time()
         
@@ -206,6 +238,23 @@ class QuantumClassicalMLSimulator:
         elif model_type == 'qsvc':
             quantum_kernel = QuantumKernel(feature_map=feature_map)
             model = QSVC(quantum_kernel=quantum_kernel)
+        elif model_type == 'qnn':
+            # Quantum Neural Network (using VQC with different ansatz)
+            from qiskit.circuit.library import TwoLocal
+            ansatz = TwoLocal(feature_map.num_qubits, ['ry', 'rz'], 'cz', reps=3)
+            model = VQC(
+                sampler=StatevectorSampler(),
+                feature_map=feature_map,
+                ansatz=ansatz,
+                optimizer=optimizer
+            )
+        elif model_type == 'qsvm_kernel':
+            # Quantum SVM with custom kernel
+            quantum_kernel = QuantumKernel(
+                feature_map=feature_map,
+                enforce_psd=False
+            )
+            model = QSVC(quantum_kernel=quantum_kernel, C=1.0)
         else:
             raise ValueError(f"Unknown quantum model: {model_type}")
             
@@ -214,14 +263,28 @@ class QuantumClassicalMLSimulator:
         
         return model, training_time
     
-    def _create_mock_quantum_model(self):
+    def _create_mock_quantum_model(self, model_type='vqc'):
         """Create mock quantum model for demo purposes"""
         class MockQuantumModel:
+            def __init__(self, model_type):
+                self.model_type = model_type
+                
             def predict(self, X):
-                # Simple mock prediction based on data
-                return (X[:, 0] + X[:, 1] > np.median(X[:, 0] + X[:, 1])).astype(int)
+                # Different mock behaviors for different quantum models
+                if self.model_type == 'qsvc':
+                    # SVM-like decision boundary
+                    return ((X[:, 0] - 0.5)**2 + (X[:, 1] - 0.5)**2 > 0.3).astype(int)
+                elif self.model_type == 'qnn':
+                    # Neural network-like non-linear boundary
+                    return (np.sin(X[:, 0] * 3) + np.cos(X[:, 1] * 3) > 0).astype(int)
+                elif self.model_type == 'qsvm_kernel':
+                    # Kernel SVM-like boundary
+                    return (X[:, 0] * X[:, 1] > np.median(X[:, 0] * X[:, 1])).astype(int)
+                else:  # vqc
+                    # Simple linear-like boundary
+                    return (X[:, 0] + X[:, 1] > np.median(X[:, 0] + X[:, 1])).astype(int)
         
-        return MockQuantumModel()
+        return MockQuantumModel(model_type)
     
     def evaluate_model(self, model, X_test, y_test):
         """Evaluate model performance"""

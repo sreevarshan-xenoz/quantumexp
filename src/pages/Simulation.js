@@ -108,7 +108,9 @@ const Simulation = () => {
   const featureMapOptions = [
     { id: 'zz', name: 'ZZ', description: 'ZZ Feature Map' },
     { id: 'z', name: 'Z', description: 'Z Feature Map' },
-    { id: 'pauli', name: 'Pauli', description: 'Pauli Feature Map' }
+    { id: 'pauli', name: 'Pauli', description: 'Basic Pauli Map' },
+    { id: 'pauli_full', name: 'Pauli Full', description: 'Full Pauli Feature Map' },
+    { id: 'second_order', name: '2nd Order', description: 'Second Order Expansion' }
   ];
 
   return (
@@ -193,18 +195,21 @@ const Simulation = () => {
                   <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
                   Feature Map
                 </h3>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {featureMapOptions.map(option => (
                     <button
                       key={option.id}
-                      className={`p-2 rounded-lg text-center transition-all duration-200 ${
+                      className={`p-2 rounded-lg text-left transition-all duration-200 ${
                         featureMap === option.id 
                           ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg' 
                           : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
                       }`}
                       onClick={() => setFeatureMap(option.id)}
                     >
-                      <div className="font-medium text-sm">{option.name}</div>
+                      <div className="font-medium text-xs">{option.name}</div>
+                      <div className={`text-xs ${featureMap === option.id ? 'text-purple-100' : 'text-gray-500 dark:text-gray-400'} truncate`}>
+                        {option.description}
+                      </div>
                     </button>
                   ))}
                 </div>

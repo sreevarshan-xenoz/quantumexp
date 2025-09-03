@@ -36,16 +36,24 @@ const About = () => {
 
   const quantumFeatures = [
     {
-      name: 'ZZ Feature Map',
-      description: 'Entangling feature map with ZZ interactions between qubits'
+      name: 'Variational Quantum Classifier (VQC)',
+      description: 'Parameterized quantum circuits optimized for classification tasks'
     },
     {
-      name: 'Z Feature Map',
-      description: 'Non-entangling feature map with Z rotations'
+      name: 'Quantum Support Vector Machine (QSVM)',
+      description: 'Quantum kernel methods for high-dimensional feature mapping'
     },
     {
-      name: 'Pauli Feature Map',
-      description: 'Feature map using Pauli X, Y, Z operations'
+      name: 'Quantum Neural Networks (QNN)',
+      description: 'Neural network architectures implemented on quantum circuits'
+    },
+    {
+      name: 'Quantum Kernel SVM',
+      description: 'Advanced quantum kernel methods with custom feature maps'
+    },
+    {
+      name: 'Multiple Feature Maps',
+      description: 'ZZ, Z, Pauli, and second-order expansion feature encodings'
     }
   ];
 
@@ -119,20 +127,42 @@ const About = () => {
         </div>
 
         {/* Technical Details */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="card animate-slide-up">
             <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center">
               <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-              Quantum Feature Maps
+              Quantum Algorithms
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-64 overflow-y-auto">
               {quantumFeatures.map((feature, index) => (
                 <div key={index} className="border-l-4 border-green-500 pl-4">
-                  <div className="font-medium text-gray-800 dark:text-gray-200">
+                  <div className="font-medium text-gray-800 dark:text-gray-200 text-sm">
                     {feature.name}
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
                     {feature.description}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="card animate-slide-up">
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center">
+              <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+              Classical Algorithms
+            </h3>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {[
+                'Logistic Regression', 'Support Vector Machines', 'Random Forest',
+                'XGBoost', 'Gradient Boosting', 'AdaBoost', 'Extra Trees',
+                'K-Nearest Neighbors', 'Naive Bayes', 'Decision Trees',
+                'Multi-Layer Perceptron', 'Ridge Classifier', 'SGD Classifier',
+                'Linear/Quadratic Discriminant Analysis'
+              ].map((algorithm, index) => (
+                <div key={index} className="border-l-4 border-blue-500 pl-4">
+                  <div className="font-medium text-gray-800 dark:text-gray-200 text-sm">
+                    {algorithm}
                   </div>
                 </div>
               ))}
