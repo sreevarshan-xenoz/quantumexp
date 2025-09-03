@@ -33,10 +33,16 @@ from sklearn.tree import DecisionTreeClassifier
 try:
     from quantum_hardware import hardware_manager
     from quantum_error_mitigation import error_mitigator
+    from advanced_quantum_algorithms import algorithm_manager
+    from hybrid_optimization import hybrid_optimizer_manager
     QUANTUM_HARDWARE_AVAILABLE = True
+    ADVANCED_ALGORITHMS_AVAILABLE = True
+    HYBRID_OPTIMIZATION_AVAILABLE = True
 except ImportError:
     QUANTUM_HARDWARE_AVAILABLE = False
-    logging.warning("Quantum hardware modules not available.")
+    ADVANCED_ALGORITHMS_AVAILABLE = False
+    HYBRID_OPTIMIZATION_AVAILABLE = False
+    logging.warning("Quantum hardware, advanced algorithms, and hybrid optimization modules not available.")
 from sklearn.naive_bayes import GaussianNB
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis, LinearDiscriminantAnalysis
 from sklearn.decomposition import PCA
@@ -1492,6 +1498,451 @@ async def characterize_quantum_device(device_name: str, num_qubits: int = 2):
         return characterization
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Device characterization failed: {str(e)}")
+
+# Advanced Quantum Algorithms Endpoints
+class AdvancedAlgorithmRequest(BaseModel):
+    algorithm_type: str
+    num_qubits: int
+    parameters: Dict[str, Any] = {}
+    execution_params: Dict[str, Any] = {}
+
+@app.get("/advanced_algorithms/available")
+async def get_available_algorithms():
+    """Get list of available advanced quantum algorithms"""
+    if not ADVANCED_ALGORITHMS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Advanced quantum algorithms not available")
+    
+    try:
+        algorithms = algorithm_manager.get_available_algorithms()
+        algorithm_info = {}
+        
+        for alg in algorithms:
+            algorithm_info[alg] = algorithm_manager.get_algorithm_info(alg)
+        
+        return {
+            "available_algorithms": algorithms,
+            "algorithm_details": algorithm_info,
+            "total_count": len(algorithms)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get algorithms: {str(e)}")
+
+@app.post("/advanced_algorithms/create")
+async def create_advanced_algorithm(request: AdvancedAlgorithmRequest):
+    """Create an instance of an advanced quantum algorithm"""
+    if not ADVANCED_ALGORITHMS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Advanced quantum algorithms not available")
+    
+    try:
+        # Create algorithm instance
+        algorithm = algorithm_manager.create_algorithm(
+            request.algorithm_type,
+            num_qubits=request.num_qubits,
+            **request.parameters
+        )
+        
+        # Build the circuit
+        circuit = algorithm.build_circuit()
+        
+        return {
+            "algorithm_type": request.algorithm_type,
+            "num_qubits": request.num_qubits,
+            "circuit_depth": circuit.depth() if hasattr(circuit, 'depth') else 0,
+            "num_parameters": len(algorithm.parameters) if algorithm.parameters else 0,
+            "creation_successful": True,
+            "parameters_used": request.parameters
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Algorithm creation failed: {str(e)}")
+
+@app.post("/advanced_algorithms/execute")
+async def execute_advanced_algorithm(request: AdvancedAlgorithmRequest):
+    """Execute an advanced quantum algorithm"""
+    if not ADVANCED_ALGORITHMS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Advanced quantum algorithms not available")
+    
+    try:
+        # Create algorithm if not exists
+        if request.algorithm_type not in algorithm_manager.algorithm_instances:
+            algorithm_manager.create_algorithm(
+                request.algorithm_type,
+                num_qubits=request.num_qubits,
+                **request.parameters
+            )
+        
+        # Execute algorithm
+        result = algorithm_manager.execute_algorithm(
+            request.algorithm_type,
+            **request.execution_params
+        )
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Algorithm execution failed: {str(e)}")
+
+@app.post("/advanced_algorithms/qaoa")
+async def run_qaoa_optimization(
+    num_qubits: int,
+    problem_type: str = "max_cut",
+    p_layers: int = 1,
+    optimizer: str = "COBYLA",
+    max_iter: int = 100
+):
+    """Run QAOA for combinatorial optimization"""
+    if not ADVANCED_ALGORITHMS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Advanced quantum algorithms not available")
+    
+    try:
+        # Create problem Hamiltonian based on type
+        if problem_type == "max_cut":
+            # Simple Max-Cut problem Hamiltonian
+            from qiskit.quantum_info import SparsePauliOp
+            pauli_list = []
+            for i in range(num_qubits - 1):
+                pauli_str = ['I'] * num_qubits
+                pauli_str[i] = 'Z'
+                pauli_str[i + 1] = 'Z'
+                pauli_list.append((''.join(pauli_str), 0.5))
+            problem_hamiltonian = SparsePauliOp.from_list(pauli_list)
+        else:
+            raise ValueError(f"Unknown problem type: {problem_type}")
+        
+        # Create and execute QAOA
+        qaoa = algorithm_manager.create_algorithm(
+            'QAOA',
+            num_qubits=num_qubits,
+            problem_hamiltonian=problem_hamiltonian,
+            p=p_layers
+        )
+        
+        result = qaoa.execute(optimizer_name=optimizer, max_iter=max_iter)
+        
+        return {
+            **result,
+            "problem_type": problem_type,
+            "p_layers": p_layers
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"QAOA execution failed: {str(e)}")
+
+@app.post("/advanced_algorithms/vqe")
+async def run_vqe_optimization(
+    num_qubits: int,
+    molecule: str = "H2",
+    ansatz_type: str = "RealAmplitudes",
+    optimizer: str = "SPSA",
+    max_iter: int = 100
+):
+    """Run VQE for molecular ground state calculation"""
+    if not ADVANCED_ALGORITHMS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Advanced quantum algorithms not available")
+    
+    try:
+        # Create molecular Hamiltonian (simplified)
+        from qiskit.quantum_info import SparsePauliOp
+        
+        if molecule == "H2":
+            # Simplified H2 Hamiltonian
+            pauli_list = [
+                ('II', -1.0523732),
+                ('IZ', 0.39793742),
+                ('ZI', -0.39793742),
+                ('ZZ', -0.01128010),
+                ('XX', 0.18093119)
+            ]
+            hamiltonian = SparsePauliOp.from_list(pauli_list)
+        else:
+            # Default simple Hamiltonian
+            pauli_list = [('Z' + 'I' * (num_qubits - 1), 1.0)]
+            hamiltonian = SparsePauliOp.from_list(pauli_list)
+        
+        # Create and execute VQE
+        vqe = algorithm_manager.create_algorithm(
+            'VQE',
+            num_qubits=num_qubits,
+            hamiltonian=hamiltonian,
+            ansatz_type=ansatz_type
+        )
+        
+        result = vqe.execute(optimizer_name=optimizer, max_iter=max_iter)
+        
+        return {
+            **result,
+            "molecule": molecule,
+            "ansatz_type": ansatz_type
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"VQE execution failed: {str(e)}")
+
+@app.post("/advanced_algorithms/qnn_train")
+async def train_quantum_neural_network(
+    num_qubits: int,
+    num_layers: int = 2,
+    feature_map_type: str = "ZZ",
+    optimizer: str = "SPSA",
+    max_iter: int = 100,
+    dataset_size: int = 100
+):
+    """Train a Quantum Neural Network"""
+    if not ADVANCED_ALGORITHMS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Advanced quantum algorithms not available")
+    
+    try:
+        # Generate synthetic training data
+        X_train = np.random.randn(dataset_size, num_qubits)
+        y_train = np.random.choice([0, 1], size=dataset_size)
+        
+        # Create and train QNN
+        qnn = algorithm_manager.create_algorithm(
+            'QNN',
+            num_qubits=num_qubits,
+            num_layers=num_layers,
+            feature_map_type=feature_map_type
+        )
+        
+        result = qnn.train(X_train, y_train, optimizer_name=optimizer, max_iter=max_iter)
+        
+        return {
+            **result,
+            "dataset_size": dataset_size,
+            "input_features": num_qubits
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"QNN training failed: {str(e)}")
+
+@app.post("/advanced_algorithms/qft")
+async def run_quantum_fourier_transform(num_qubits: int):
+    """Execute Quantum Fourier Transform"""
+    if not ADVANCED_ALGORITHMS_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Advanced quantum algorithms not available")
+    
+    try:
+        # Create and execute QFT
+        qft = algorithm_manager.create_algorithm('QFT', num_qubits=num_qubits)
+        result = qft.execute()
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"QFT execution failed: {str(e)}")
+
+# Hybrid Optimization Endpoints
+class HybridOptimizationRequest(BaseModel):
+    optimizer_type: str
+    objective_type: str = "quadratic"  # quadratic, rastrigin, rosenbrock
+    num_parameters: int = 4
+    optimization_params: Dict[str, Any] = {}
+
+@app.get("/hybrid_optimization/available")
+async def get_available_hybrid_optimizers():
+    """Get list of available hybrid optimizers"""
+    if not HYBRID_OPTIMIZATION_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Hybrid optimization not available")
+    
+    try:
+        optimizers = {
+            'parameter_shift': {
+                'name': 'Parameter Shift Rule',
+                'description': 'Quantum gradient-based optimization using parameter shift rule',
+                'use_cases': ['Variational Quantum Algorithms', 'Quantum Machine Learning'],
+                'parameters': ['learning_rate', 'max_iter', 'tolerance']
+            },
+            'multi_objective': {
+                'name': 'Multi-Objective Optimization',
+                'description': 'Pareto-optimal solutions for multiple objectives',
+                'use_cases': ['Trade-off Analysis', 'Multi-criteria Decision Making'],
+                'parameters': ['weights', 'max_iter', 'num_starts']
+            },
+            'bayesian': {
+                'name': 'Bayesian Optimization',
+                'description': 'Gaussian Process-based optimization for expensive functions',
+                'use_cases': ['Hyperparameter Tuning', 'Expensive Function Optimization'],
+                'parameters': ['n_initial', 'max_iter', 'acquisition_function']
+            },
+            'parallel': {
+                'name': 'Parallel Hybrid Optimization',
+                'description': 'Multiple optimization strategies running in parallel',
+                'use_cases': ['Robust Optimization', 'Algorithm Comparison'],
+                'parameters': ['max_workers', 'optimizer_configs']
+            }
+        }
+        
+        return {
+            "available_optimizers": list(optimizers.keys()),
+            "optimizer_details": optimizers,
+            "total_count": len(optimizers)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get optimizers: {str(e)}")
+
+@app.post("/hybrid_optimization/run")
+async def run_hybrid_optimization(request: HybridOptimizationRequest):
+    """Run hybrid quantum-classical optimization"""
+    if not HYBRID_OPTIMIZATION_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Hybrid optimization not available")
+    
+    try:
+        # Create objective function based on type
+        def create_objective_function(obj_type: str, num_params: int):
+            if obj_type == "quadratic":
+                def quadratic_objective(params):
+                    return np.sum(params**2)
+                return quadratic_objective
+            
+            elif obj_type == "rastrigin":
+                def rastrigin_objective(params):
+                    A = 10
+                    n = len(params)
+                    return A * n + np.sum(params**2 - A * np.cos(2 * np.pi * params))
+                return rastrigin_objective
+            
+            elif obj_type == "rosenbrock":
+                def rosenbrock_objective(params):
+                    return np.sum(100 * (params[1:] - params[:-1]**2)**2 + (1 - params[:-1])**2)
+                return rosenbrock_objective
+            
+            else:
+                # Default quadratic
+                def default_objective(params):
+                    return np.sum(params**2)
+                return default_objective
+        
+        objective_function = create_objective_function(request.objective_type, request.num_parameters)
+        initial_params = np.random.uniform(-1, 1, request.num_parameters)
+        
+        # Run optimization
+        result = hybrid_optimizer_manager.run_optimization(
+            request.optimizer_type,
+            objective_function,
+            initial_params,
+            **request.optimization_params
+        )
+        
+        return {
+            **result,
+            "objective_type": request.objective_type,
+            "num_parameters": request.num_parameters,
+            "initial_parameters": initial_params.tolist()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Hybrid optimization failed: {str(e)}")
+
+@app.post("/hybrid_optimization/compare")
+async def compare_hybrid_optimizers(
+    objective_type: str = "quadratic",
+    num_parameters: int = 4,
+    optimizers: List[str] = ["parameter_shift", "bayesian"]
+):
+    """Compare multiple hybrid optimizers on the same problem"""
+    if not HYBRID_OPTIMIZATION_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Hybrid optimization not available")
+    
+    try:
+        # Create objective function
+        def create_objective_function(obj_type: str, num_params: int):
+            if obj_type == "quadratic":
+                return lambda params: np.sum(params**2)
+            elif obj_type == "rastrigin":
+                return lambda params: 10 * num_params + np.sum(params**2 - 10 * np.cos(2 * np.pi * params))
+            elif obj_type == "rosenbrock":
+                return lambda params: np.sum(100 * (params[1:] - params[:-1]**2)**2 + (1 - params[:-1])**2)
+            else:
+                return lambda params: np.sum(params**2)
+        
+        objective_function = create_objective_function(objective_type, num_parameters)
+        initial_params = np.random.uniform(-1, 1, num_parameters)
+        
+        # Create optimizer configurations
+        optimizer_configs = []
+        for opt in optimizers:
+            if opt == "parameter_shift":
+                optimizer_configs.append({
+                    'type': 'parameter_shift',
+                    'params': {'max_iter': 50, 'learning_rate': 0.01}
+                })
+            elif opt == "bayesian":
+                optimizer_configs.append({
+                    'type': 'bayesian',
+                    'params': {'n_initial': 5, 'max_iter': 30}
+                })
+            elif opt == "multi_objective":
+                optimizer_configs.append({
+                    'type': 'multi_objective',
+                    'params': {'max_iter': 50}
+                })
+        
+        # Run comparison
+        result = hybrid_optimizer_manager.compare_optimizers(
+            objective_function,
+            initial_params,
+            optimizer_configs
+        )
+        
+        return {
+            **result,
+            "objective_type": objective_type,
+            "num_parameters": num_parameters,
+            "compared_optimizers": optimizers
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Optimizer comparison failed: {str(e)}")
+
+@app.post("/hybrid_optimization/multi_objective")
+async def run_multi_objective_optimization(
+    num_parameters: int = 4,
+    objectives: List[str] = ["minimize_energy", "maximize_fidelity"],
+    weights: Optional[List[float]] = None
+):
+    """Run multi-objective optimization"""
+    if not HYBRID_OPTIMIZATION_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Hybrid optimization not available")
+    
+    try:
+        # Create multiple objective functions
+        objective_functions = []
+        
+        for obj in objectives:
+            if obj == "minimize_energy":
+                objective_functions.append(lambda params: np.sum(params**2))
+            elif obj == "maximize_fidelity":
+                objective_functions.append(lambda params: -np.exp(-np.sum(params**2)))
+            elif obj == "minimize_complexity":
+                objective_functions.append(lambda params: np.sum(np.abs(params)))
+            else:
+                # Default objective
+                objective_functions.append(lambda params: np.sum(params**2))
+        
+        initial_params = np.random.uniform(-1, 1, num_parameters)
+        
+        # Create multi-objective optimizer
+        optimizer = hybrid_optimizer_manager.create_optimizer('multi_objective', 
+                                                            quantum_component=None, 
+                                                            classical_component=None)
+        
+        # Run optimization
+        result = optimizer.optimize(
+            objective_functions,
+            initial_params,
+            weights=np.array(weights) if weights else None,
+            max_iter=100
+        )
+        
+        return {
+            **result,
+            "objectives": objectives,
+            "num_parameters": num_parameters,
+            "weights_used": weights
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Multi-objective optimization failed: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
